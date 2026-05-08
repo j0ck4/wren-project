@@ -66,6 +66,19 @@ impl WrenApplication {
         self.imp().tray.get()
     }
 
+    /// Sends a desktop notification.
+    pub fn notify(&self, title: &str, body: &str, success: bool) {
+        let notification = gio::Notification::new(title);
+        notification.set_body(Some(body));
+        let icon_name = if success {
+            "network-vpn-symbolic"
+        } else {
+            "dialog-error-symbolic"
+        };
+        notification.set_icon(&gio::ThemedIcon::new(icon_name));
+        self.send_notification(Some("wren-tunnel"), &notification);
+    }
+
     fn install_actions(&self) {
         let about = gio::ActionEntry::builder("about")
             .activate(|app: &Self, _, _| app.show_about())

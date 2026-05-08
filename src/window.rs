@@ -383,11 +383,22 @@ impl WrenWindow {
                     Ok(()) => {
                         let verb = if is_active { "disconnected" } else { "connected" };
                         win.toast(&format!("{name} {verb}"));
+                        if let Some(app) = win.application().and_downcast::<WrenApplication>() {
+                            let title = if is_active { "Tunnel disconnected" } else { "Tunnel connected" };
+                            app.notify(title, &name, true);
+                        }
                     }
                     Err(e) => {
                         tracing::error!("Toggle ({name}) failed: {e:#}");
                         let summary = friendly_error(e);
                         win.toast(&format!("{action} {name}: {summary}"));
+                        if let Some(app) = win.application().and_downcast::<WrenApplication>() {
+                            app.notify(
+                                &format!("{action} failed"),
+                                &format!("{name}: {summary}"),
+                                false,
+                            );
+                        }
                     }
                 }
                 win.imp().busy.set(false);
