@@ -19,6 +19,29 @@ pub async fn down(config_path: &Path) -> Result<()> {
     run(&["pkexec", "wg-quick", "down", &path]).await
 }
 
+/// Reads the cumulative byte counters for a wireguard interface.
+/// Returned as `(received, sent)`. `/sys/class/net/<iface>/statistics`
+/// is world-readable, so this avoids any pkexec prompt.
+pub async fn transfer(name: &str) -> Result<(u64, u64)> {
+    let rx_path = format!("/sys/class/net/{name}/statistics/rx_bytes");
+    let tx_path = format!("/sys/class/net/{name}/statistics/tx_bytes");
+    let out = capture(&["cat", &rx_path, &tx_path]).await?;
+    let mut lines = out.lines();
+    let rx: u64 = lines
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("missing rx line"))?
+        .trim()
+        .parse()
+        .context("parsing rx_bytes")?;
+    let tx: u64 = lines
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("missing tx line"))?
+        .trim()
+        .parse()
+        .context("parsing tx_bytes")?;
+    Ok((rx, tx))
+}
+
 /// Returns the set of WireGuard interface names that currently
 /// exist on the host. Uses `ip link show type wireguard`, which is
 /// unprivileged and ignores unrelated devices like `docker0` or

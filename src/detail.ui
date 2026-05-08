@@ -10,13 +10,45 @@
         <child>
           <object class="AdwClamp">
             <property name="child">
-              <object class="GtkBox" id="content_box">
+              <object class="GtkBox">
                 <property name="orientation">vertical</property>
                 <property name="spacing">24</property>
                 <property name="margin-top">24</property>
                 <property name="margin-bottom">24</property>
                 <property name="margin-start">12</property>
                 <property name="margin-end">12</property>
+
+                <child>
+                  <object class="AdwPreferencesGroup" id="transfer_group">
+                    <property name="title" translatable="yes">Transfer</property>
+                    <property name="visible">false</property>
+                    <child>
+                      <object class="AdwActionRow" id="rx_row">
+                        <property name="title" translatable="yes">Received</property>
+                        <property name="subtitle">—</property>
+                        <style>
+                          <class name="property"/>
+                        </style>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="AdwActionRow" id="tx_row">
+                        <property name="title" translatable="yes">Sent</property>
+                        <property name="subtitle">—</property>
+                        <style>
+                          <class name="property"/>
+                        </style>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+
+                <child>
+                  <object class="GtkBox" id="content_box">
+                    <property name="orientation">vertical</property>
+                    <property name="spacing">24</property>
+                  </object>
+                </child>
               </object>
             </property>
           </object>

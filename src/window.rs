@@ -197,6 +197,9 @@ impl WrenWindow {
         *imp.selected_name.borrow_mut() = Some(tunnel.name.clone());
         *imp.selected_path.borrow_mut() = Some(tunnel.config_path.clone());
 
+        let is_active = imp.active_set.borrow().contains(&tunnel.name);
+        imp.tunnel_detail.set_active_state(&tunnel.name, is_active);
+
         self.update_connect_button();
     }
 
@@ -205,6 +208,7 @@ impl WrenWindow {
         imp.content_page.set_title("Tunnel");
         imp.content_stack.set_visible_child_name("placeholder");
         imp.connect_button.set_visible(false);
+        imp.tunnel_detail.set_active_state("", false);
         imp.selected_name.borrow_mut().take();
         imp.selected_path.borrow_mut().take();
     }
@@ -217,6 +221,7 @@ impl WrenWindow {
                     Ok(set) => {
                         *win.imp().active_set.borrow_mut() = set;
                         win.update_connect_button();
+                        win.update_detail_active_state();
                         win.push_tray_update();
                     }
                     Err(e) => {
@@ -294,6 +299,13 @@ impl WrenWindow {
         }
         self.imp().force_quit.set(true);
         self.close();
+    }
+
+    fn update_detail_active_state(&self) {
+        let imp = self.imp();
+        let Some(name) = imp.selected_name.borrow().clone() else { return };
+        let active = imp.active_set.borrow().contains(&name);
+        imp.tunnel_detail.set_active_state(&name, active);
     }
 
     fn update_connect_button(&self) {

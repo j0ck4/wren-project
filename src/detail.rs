@@ -1,7 +1,9 @@
+use std::cell::RefCell;
+
 use adw::{prelude::*, subclass::prelude::*};
 use gtk::glib;
 
-use crate::models::Tunnel;
+use crate::{models::Tunnel, wg::manager};
 
 mod imp {
     use super::*;
@@ -10,7 +12,15 @@ mod imp {
     #[template(resource = "/io/github/j0ck4/Wren/detail.ui")]
     pub struct TunnelDetail {
         #[template_child]
-        pub content_box: TemplateChild<gtk::Box>,
+        pub content_box:    TemplateChild<gtk::Box>,
+        #[template_child]
+        pub transfer_group: TemplateChild<adw::PreferencesGroup>,
+        #[template_child]
+        pub rx_row:         TemplateChild<adw::ActionRow>,
+        #[template_child]
+        pub tx_row:         TemplateChild<adw::ActionRow>,
+
+        pub poll_source: RefCell<Option<glib::SourceId>>,
     }
 
     #[glib::object_subclass]
@@ -28,7 +38,14 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for TunnelDetail {}
+    impl ObjectImpl for TunnelDetail {
+        fn dispose(&self) {
+            if let Some(id) = self.poll_source.borrow_mut().take() {
+                id.remove();
+            }
+        }
+    }
+
     impl WidgetImpl for TunnelDetail {}
     impl BinImpl for TunnelDetail {}
 }
@@ -56,6 +73,61 @@ impl TunnelDetail {
         if !tunnel.config.peers.is_empty() {
             content.append(&peers_group(tunnel));
         }
+    }
+
+    /// Toggle the Transfer section. While `active` is true, the
+    /// section is visible and gets refreshed every 2 seconds from
+    /// `/sys/class/net/<name>/statistics`.
+    pub fn set_active_state(&self, name: &str, active: bool) {
+        let imp = self.imp();
+        if active {
+            imp.transfer_group.set_visible(true);
+            self.start_polling(name.to_string());
+        } else {
+            self.stop_polling();
+            imp.transfer_group.set_visible(false);
+            imp.rx_row.set_subtitle("—");
+            imp.tx_row.set_subtitle("—");
+        }
+    }
+
+    fn start_polling(&self, name: String) {
+        self.stop_polling();
+        self.poll_now(name.clone());
+
+        let weak = self.downgrade();
+        let id = glib::timeout_add_seconds_local(2, move || {
+            let Some(detail) = weak.upgrade() else {
+                return glib::ControlFlow::Break;
+            };
+            detail.poll_now(name.clone());
+            glib::ControlFlow::Continue
+        });
+        self.imp().poll_source.replace(Some(id));
+    }
+
+    fn stop_polling(&self) {
+        if let Some(id) = self.imp().poll_source.borrow_mut().take() {
+            id.remove();
+        }
+    }
+
+    fn poll_now(&self, name: String) {
+        glib::spawn_future_local(glib::clone!(
+            #[weak(rename_to = detail)] self,
+            async move {
+                match manager::transfer(&name).await {
+                    Ok((rx, tx)) => {
+                        let imp = detail.imp();
+                        imp.rx_row.set_subtitle(&format_bytes(rx));
+                        imp.tx_row.set_subtitle(&format_bytes(tx));
+                    }
+                    Err(e) => {
+                        tracing::debug!("transfer({name}): {e:#}");
+                    }
+                }
+            }
+        ));
     }
 }
 
@@ -129,4 +201,20 @@ fn short_key(key: &str) -> String {
     let head: String = chars.iter().take(6).collect();
     let tail: String = chars.iter().rev().take(6).collect::<Vec<_>>().into_iter().rev().collect();
     format!("{head}…{tail}")
+}
+
+/// Human-readable byte count using IEC prefixes (KiB / MiB / GiB).
+fn format_bytes(b: u64) -> String {
+    const KIB: u64 = 1024;
+    const MIB: u64 = KIB * 1024;
+    const GIB: u64 = MIB * 1024;
+    if b < KIB {
+        format!("{b} B")
+    } else if b < MIB {
+        format!("{:.1} KiB", b as f64 / KIB as f64)
+    } else if b < GIB {
+        format!("{:.2} MiB", b as f64 / MIB as f64)
+    } else {
+        format!("{:.2} GiB", b as f64 / GIB as f64)
+    }
 }
