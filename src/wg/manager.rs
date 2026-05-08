@@ -19,12 +19,22 @@ pub async fn down(config_path: &Path) -> Result<()> {
     run(&["pkexec", "wg-quick", "down", &path]).await
 }
 
-/// Returns the set of network interface names that currently exist
-/// on the host. We treat a tunnel as "active" iff its name is in
-/// this set. This avoids needing CAP_NET_ADMIN to call `wg show`.
+/// Returns the set of WireGuard interface names that currently
+/// exist on the host. Uses `ip link show type wireguard`, which is
+/// unprivileged and ignores unrelated devices like `docker0` or
+/// `lo`.
 pub async fn active_interfaces() -> Result<HashSet<String>> {
-    let out = capture(&["ls", "/sys/class/net"]).await?;
-    Ok(out.split_whitespace().map(String::from).collect())
+    let out = capture(&["ip", "-br", "link", "show", "type", "wireguard"]).await?;
+    Ok(out
+        .lines()
+        .filter_map(|line| {
+            let first = line.split_whitespace().next()?;
+            // `ip -br` may show names like "veth0@if12" for paired
+            // devices; strip the `@parent` suffix just in case.
+            let name = first.split('@').next().unwrap_or(first);
+            (!name.is_empty()).then(|| name.to_string())
+        })
+        .collect())
 }
 
 async fn run(args: &[&str]) -> Result<()> {
