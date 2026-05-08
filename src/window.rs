@@ -241,7 +241,7 @@ impl WrenWindow {
             #[weak(rename_to = win)] self,
             async move {
                 let res = if is_active {
-                    manager::down(&name).await
+                    manager::down(&path).await
                 } else {
                     manager::up(&path).await
                 };

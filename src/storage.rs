@@ -2,6 +2,7 @@
 
 use std::{
     fs,
+    os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
 };
 
@@ -41,6 +42,10 @@ pub fn import(src: &Path) -> Result<Tunnel> {
 
     fs::write(&dest, &text)
         .with_context(|| format!("writing {}", dest.display()))?;
+    // Tunnel configs hold private keys; tighten permissions to
+    // user-only so wg-quick stops warning about world access.
+    fs::set_permissions(&dest, fs::Permissions::from_mode(0o600))
+        .with_context(|| format!("chmod 0600 {}", dest.display()))?;
 
     Ok(Tunnel { name, config_path: dest, config })
 }
@@ -63,6 +68,8 @@ pub fn list() -> Result<Vec<Tunnel>> {
         let Some(stem) = path.file_stem().and_then(|s| s.to_str()) else {
             continue;
         };
+
+        let _ = fs::set_permissions(&path, fs::Permissions::from_mode(0o600));
 
         let path = match canonical_path(&path, stem) {
             Ok(p) => p,

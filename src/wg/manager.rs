@@ -14,8 +14,9 @@ pub async fn up(config_path: &Path) -> Result<()> {
     run(&["pkexec", "wg-quick", "up", &path]).await
 }
 
-pub async fn down(name_or_path: &str) -> Result<()> {
-    run(&["pkexec", "wg-quick", "down", name_or_path]).await
+pub async fn down(config_path: &Path) -> Result<()> {
+    let path = config_path.to_string_lossy();
+    run(&["pkexec", "wg-quick", "down", &path]).await
 }
 
 /// Returns the set of network interface names that currently exist
