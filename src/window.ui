@@ -9,6 +9,8 @@
     <property name="default-height">600</property>
 
     <property name="content">
+      <object class="AdwToastOverlay" id="toast_overlay">
+        <property name="child">
       <object class="AdwNavigationSplitView" id="split_view">
         <property name="min-sidebar-width">240</property>
 
@@ -89,6 +91,7 @@
         </property>
 
         <property name="content">
+          <!-- right-hand pane -->
           <object class="AdwNavigationPage" id="content_page">
             <property name="title" translatable="yes">Tunnel</property>
             <property name="child">
@@ -131,6 +134,8 @@
               </object>
             </property>
           </object>
+        </property>
+      </object>
         </property>
       </object>
     </property>

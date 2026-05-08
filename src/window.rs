@@ -16,6 +16,16 @@ use crate::{
     wg::manager,
 };
 
+/// Trims an `anyhow::Error` chain to the most user-relevant
+/// message: keep the deepest non-trivial cause that the host
+/// command gave us, dropping our internal `spawning host …`
+/// wrappers.
+fn friendly_error(e: &anyhow::Error) -> String {
+    e.chain()
+        .last()
+        .map_or_else(|| e.to_string(), |c| c.to_string())
+}
+
 mod imp {
     use super::*;
 
@@ -40,6 +50,8 @@ mod imp {
         pub tunnel_detail:       TemplateChild<TunnelDetail>,
         #[template_child]
         pub connect_button:      TemplateChild<gtk::Button>,
+        #[template_child]
+        pub toast_overlay:       TemplateChild<adw::ToastOverlay>,
 
         pub tunnels:        OnceCell<gio::ListStore>,
         pub active_set:     RefCell<HashSet<String>>,
@@ -196,10 +208,18 @@ impl WrenWindow {
                         win.update_connect_button();
                         win.push_tray_update();
                     }
-                    Err(e) => tracing::error!("active_interfaces: {e:#}"),
+                    Err(e) => {
+                        tracing::error!("active_interfaces: {e:#}");
+                        win.toast(&format!("Could not refresh tunnel status: {e}"));
+                    }
                 }
             }
         ));
+    }
+
+    /// Adds a transient notification at the bottom of the window.
+    fn toast(&self, message: &str) {
+        self.imp().toast_overlay.add_toast(adw::Toast::new(message));
     }
 
     fn update_connect_button(&self) {
@@ -267,13 +287,22 @@ impl WrenWindow {
         glib::spawn_future_local(glib::clone!(
             #[weak(rename_to = win)] self,
             async move {
+                let action = if is_active { "Disconnect" } else { "Connect" };
                 let res = if is_active {
                     manager::down(&path).await
                 } else {
                     manager::up(&path).await
                 };
-                if let Err(e) = res {
-                    tracing::error!("Toggle ({name}) failed: {e:#}");
+                match &res {
+                    Ok(()) => {
+                        let verb = if is_active { "disconnected" } else { "connected" };
+                        win.toast(&format!("{name} {verb}"));
+                    }
+                    Err(e) => {
+                        tracing::error!("Toggle ({name}) failed: {e:#}");
+                        let summary = friendly_error(e);
+                        win.toast(&format!("{action} {name}: {summary}"));
+                    }
                 }
                 win.imp().busy.set(false);
                 win.refresh_active_set();
@@ -329,8 +358,18 @@ impl WrenWindow {
                             Ok(Tunnel { name, .. }) => {
                                 tracing::info!("Imported tunnel {name}");
                                 win.refresh_tunnels();
+                                win.toast(&format!("Imported {name}"));
                             }
-                            Err(e) => tracing::error!("Import failed: {e:#}"),
+                            Err(e) => {
+                                tracing::error!("Import failed: {e:#}");
+                                win.toast(&format!(
+                                    "Could not import {}: {}",
+                                    path.file_name()
+                                        .and_then(|n| n.to_str())
+                                        .unwrap_or("file"),
+                                    friendly_error(&e)
+                                ));
+                            }
                         }
                     }
                     Err(e) if e.matches(gtk::DialogError::Dismissed) => {}
