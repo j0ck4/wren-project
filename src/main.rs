@@ -1,4 +1,5 @@
 mod application;
+mod autostart;
 mod config;
 mod detail;
 mod models;

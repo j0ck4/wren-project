@@ -6,6 +6,12 @@
   <menu id="primary_menu">
     <section>
       <item>
+        <attribute name="label" translatable="yes">Start at _Login</attribute>
+        <attribute name="action">app.autostart</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
         <attribute name="label" translatable="yes">_About Wren</attribute>
         <attribute name="action">app.about</attribute>
       </item>

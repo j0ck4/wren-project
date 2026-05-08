@@ -238,6 +238,10 @@ impl WrenWindow {
         self.imp().toast_overlay.add_toast(adw::Toast::new(message));
     }
 
+    pub fn show_toast(&self, message: &str) {
+        self.toast(message);
+    }
+
     fn confirm_quit_with_active(&self) {
         glib::spawn_future_local(glib::clone!(
             #[weak(rename_to = win)] self,

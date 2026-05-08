@@ -4,7 +4,7 @@ use adw::{prelude::*, subclass::prelude::*};
 use gtk::{gio, glib};
 
 use crate::{
-    config,
+    autostart, config,
     tray::{self, TrayMessage, WrenTrayHandle},
     window::WrenWindow,
 };
@@ -88,6 +88,37 @@ impl WrenApplication {
             .build();
         self.add_action_entries([about, quit]);
         self.set_accels_for_action("app.quit", &["<Primary>q"]);
+
+        // Stateful boolean action shown as a toggle in the
+        // primary menu. Clicking the item asks for state
+        // change; we apply it on disk and confirm via set_state
+        // (or leave it untouched on failure).
+        let autostart_action = gio::SimpleAction::new_stateful(
+            "autostart",
+            None,
+            &autostart::is_enabled().to_variant(),
+        );
+        autostart_action.connect_change_state(glib::clone!(
+            #[weak(rename_to = app)] self,
+            move |action, requested| {
+                let Some(requested) = requested else { return };
+                let enable: bool = requested.get().unwrap_or(false);
+                let res = if enable { autostart::enable() } else { autostart::disable() };
+                match res {
+                    Ok(()) => action.set_state(requested),
+                    Err(e) => {
+                        tracing::error!("autostart toggle: {e:#}");
+                        if let Some(window) = app.active_window().and_downcast::<WrenWindow>() {
+                            window.show_toast(&format!(
+                                "Could not change autostart: {}",
+                                e.chain().last().map_or_else(|| e.to_string(), |c| c.to_string())
+                            ));
+                        }
+                    }
+                }
+            }
+        ));
+        self.add_action(&autostart_action);
     }
 
     fn show_about(&self) {
