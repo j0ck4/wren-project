@@ -3,6 +3,7 @@ mod config;
 mod detail;
 mod models;
 mod storage;
+mod tray;
 mod wg;
 mod window;
 

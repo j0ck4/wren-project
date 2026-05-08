@@ -8,9 +8,11 @@ use adw::{prelude::*, subclass::prelude::*};
 use gtk::{gio, glib};
 
 use crate::{
+    application::WrenApplication,
     detail::TunnelDetail,
     models::{Tunnel, TunnelObject},
     storage,
+    tray::TunnelEntry,
     wg::manager,
 };
 
@@ -99,7 +101,7 @@ mod imp {
 
             self.connect_button.connect_clicked(glib::clone!(
                 #[weak] win,
-                move |_| win.toggle_connection()
+                move |_| win.toggle_selected()
             ));
 
             win.refresh_tunnels();
@@ -152,6 +154,7 @@ impl WrenWindow {
             imp.sidebar_stack.set_visible_child_name("empty");
             self.show_placeholder();
         }
+        self.push_tray_update();
     }
 
     fn show_tunnel_at(&self, index: i32) {
@@ -191,6 +194,7 @@ impl WrenWindow {
                     Ok(set) => {
                         *win.imp().active_set.borrow_mut() = set;
                         win.update_connect_button();
+                        win.push_tray_update();
                     }
                     Err(e) => tracing::error!("active_interfaces: {e:#}"),
                 }
@@ -228,13 +232,36 @@ impl WrenWindow {
         }
     }
 
-    fn toggle_connection(&self) {
+    fn toggle_selected(&self) {
         let imp = self.imp();
         let Some(name) = imp.selected_name.borrow().clone() else { return };
         let Some(path) = imp.selected_path.borrow().clone() else { return };
         let is_active = imp.active_set.borrow().contains(&name);
+        self.run_toggle(name, path, is_active);
+    }
 
-        imp.busy.set(true);
+    pub fn toggle_tunnel_by_name(&self, target: &str) {
+        let store = self.store();
+        for i in 0..store.n_items() {
+            let Some(item) = store.item(i) else { continue };
+            let Some(t) = item.downcast_ref::<TunnelObject>() else { continue };
+            if t.name() == target {
+                let name = t.name();
+                let path = t.config_path();
+                let is_active = self.imp().active_set.borrow().contains(&name);
+                self.run_toggle(name, path, is_active);
+                return;
+            }
+        }
+        tracing::warn!("toggle_tunnel_by_name: no tunnel called {target:?}");
+    }
+
+    fn run_toggle(&self, name: String, path: PathBuf, is_active: bool) {
+        if self.imp().busy.get() {
+            tracing::warn!("toggle while busy; ignoring");
+            return;
+        }
+        self.imp().busy.set(true);
         self.update_connect_button();
 
         glib::spawn_future_local(glib::clone!(
@@ -252,6 +279,24 @@ impl WrenWindow {
                 win.refresh_active_set();
             }
         ));
+    }
+
+    fn push_tray_update(&self) {
+        let Some(app) = self.application().and_downcast::<WrenApplication>() else { return };
+        let Some(tray) = app.tray() else { return };
+
+        let store = self.store();
+        let active = self.imp().active_set.borrow();
+        let mut entries = Vec::with_capacity(store.n_items() as usize);
+        for i in 0..store.n_items() {
+            let Some(item) = store.item(i) else { continue };
+            let Some(t) = item.downcast_ref::<TunnelObject>() else { continue };
+            let name = t.name();
+            let is_active = active.contains(&name);
+            entries.push(TunnelEntry { name, active: is_active });
+        }
+        drop(active);
+        tray.set_tunnels(entries);
     }
 
     fn open_import_dialog(&self) {
