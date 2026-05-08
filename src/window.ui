@@ -94,7 +94,14 @@
             <property name="child">
               <object class="AdwToolbarView">
                 <child type="top">
-                  <object class="AdwHeaderBar"/>
+                  <object class="AdwHeaderBar">
+                    <child type="end">
+                      <object class="GtkButton" id="connect_button">
+                        <property name="visible">false</property>
+                        <property name="label" translatable="yes">Connect</property>
+                      </object>
+                    </child>
+                  </object>
                 </child>
                 <property name="content">
                   <object class="GtkStack" id="content_stack">

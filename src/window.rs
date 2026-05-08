@@ -1,4 +1,8 @@
-use std::cell::OnceCell;
+use std::{
+    cell::{Cell, OnceCell, RefCell},
+    collections::HashSet,
+    path::PathBuf,
+};
 
 use adw::{prelude::*, subclass::prelude::*};
 use gtk::{gio, glib};
@@ -7,6 +11,7 @@ use crate::{
     detail::TunnelDetail,
     models::{Tunnel, TunnelObject},
     storage,
+    wg::manager,
 };
 
 mod imp {
@@ -31,8 +36,14 @@ mod imp {
         pub content_stack:       TemplateChild<gtk::Stack>,
         #[template_child]
         pub tunnel_detail:       TemplateChild<TunnelDetail>,
+        #[template_child]
+        pub connect_button:      TemplateChild<gtk::Button>,
 
-        pub tunnels: OnceCell<gio::ListStore>,
+        pub tunnels:        OnceCell<gio::ListStore>,
+        pub active_set:     RefCell<HashSet<String>>,
+        pub busy:           Cell<bool>,
+        pub selected_name:  RefCell<Option<String>>,
+        pub selected_path:  RefCell<Option<PathBuf>>,
     }
 
     #[glib::object_subclass]
@@ -42,8 +53,6 @@ mod imp {
         type ParentType = adw::ApplicationWindow;
 
         fn class_init(klass: &mut Self::Class) {
-            // Custom widget types must be registered before the
-            // template referring to them is parsed.
             TunnelDetail::ensure_type();
             klass.bind_template();
         }
@@ -88,7 +97,13 @@ mod imp {
                 move |_, row| win.show_tunnel_at(row.index())
             ));
 
+            self.connect_button.connect_clicked(glib::clone!(
+                #[weak] win,
+                move |_| win.toggle_connection()
+            ));
+
             win.refresh_tunnels();
+            win.refresh_active_set();
         }
     }
 
@@ -140,15 +155,9 @@ impl WrenWindow {
     }
 
     fn show_tunnel_at(&self, index: i32) {
-        let Ok(idx) = u32::try_from(index) else {
-            return;
-        };
-        let Some(item) = self.store().item(idx) else {
-            return;
-        };
-        let Some(tunnel_obj) = item.downcast_ref::<TunnelObject>() else {
-            return;
-        };
+        let Ok(idx) = u32::try_from(index) else { return };
+        let Some(item) = self.store().item(idx) else { return };
+        let Some(tunnel_obj) = item.downcast_ref::<TunnelObject>() else { return };
         tunnel_obj.with(|t| self.show_tunnel_detail(t));
     }
 
@@ -158,12 +167,91 @@ impl WrenWindow {
         imp.content_page.set_title(&tunnel.name);
         imp.content_stack.set_visible_child_name("detail");
         imp.split_view.set_show_content(true);
+
+        *imp.selected_name.borrow_mut() = Some(tunnel.name.clone());
+        *imp.selected_path.borrow_mut() = Some(tunnel.config_path.clone());
+
+        self.update_connect_button();
     }
 
     fn show_placeholder(&self) {
         let imp = self.imp();
         imp.content_page.set_title("Tunnel");
         imp.content_stack.set_visible_child_name("placeholder");
+        imp.connect_button.set_visible(false);
+        imp.selected_name.borrow_mut().take();
+        imp.selected_path.borrow_mut().take();
+    }
+
+    fn refresh_active_set(&self) {
+        glib::spawn_future_local(glib::clone!(
+            #[weak(rename_to = win)] self,
+            async move {
+                match manager::active_interfaces().await {
+                    Ok(set) => {
+                        *win.imp().active_set.borrow_mut() = set;
+                        win.update_connect_button();
+                    }
+                    Err(e) => tracing::error!("active_interfaces: {e:#}"),
+                }
+            }
+        ));
+    }
+
+    fn update_connect_button(&self) {
+        let imp = self.imp();
+        let Some(name) = imp.selected_name.borrow().clone() else {
+            imp.connect_button.set_visible(false);
+            return;
+        };
+
+        let btn = &*imp.connect_button;
+        btn.set_visible(true);
+
+        if imp.busy.get() {
+            btn.set_sensitive(false);
+            btn.set_label("Working…");
+            btn.remove_css_class("suggested-action");
+            btn.remove_css_class("destructive-action");
+            return;
+        }
+
+        btn.set_sensitive(true);
+        btn.remove_css_class("suggested-action");
+        btn.remove_css_class("destructive-action");
+        if imp.active_set.borrow().contains(&name) {
+            btn.set_label("Disconnect");
+            btn.add_css_class("destructive-action");
+        } else {
+            btn.set_label("Connect");
+            btn.add_css_class("suggested-action");
+        }
+    }
+
+    fn toggle_connection(&self) {
+        let imp = self.imp();
+        let Some(name) = imp.selected_name.borrow().clone() else { return };
+        let Some(path) = imp.selected_path.borrow().clone() else { return };
+        let is_active = imp.active_set.borrow().contains(&name);
+
+        imp.busy.set(true);
+        self.update_connect_button();
+
+        glib::spawn_future_local(glib::clone!(
+            #[weak(rename_to = win)] self,
+            async move {
+                let res = if is_active {
+                    manager::down(&name).await
+                } else {
+                    manager::up(&path).await
+                };
+                if let Err(e) = res {
+                    tracing::error!("Toggle ({name}) failed: {e:#}");
+                }
+                win.imp().busy.set(false);
+                win.refresh_active_set();
+            }
+        ));
     }
 
     fn open_import_dialog(&self) {

@@ -16,6 +16,7 @@
         "--device=dri",
         "--talk-name=org.freedesktop.Notifications",
         "--talk-name=org.kde.StatusNotifierWatcher",
+        "--talk-name=org.freedesktop.Flatpak",
         "--system-talk-name=org.freedesktop.PolicyKit1"
     ],
     "build-options": {
