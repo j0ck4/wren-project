@@ -29,11 +29,24 @@ flatpak run io.github.j0ck4.Wren.Devel
 ### Локальная сборка (нужны системные dev-пакеты)
 
 ```bash
-sudo apt install meson ninja-build pkg-config libgtk-4-dev libadwaita-1-dev
-meson setup builddir
+sudo apt install meson ninja-build pkg-config libgtk-4-dev libadwaita-1-dev cargo
+meson setup builddir --buildtype=release
 meson compile -C builddir
-meson install -C builddir
+sudo meson install -C builddir
 ```
+
+### Сборка `.deb`
+
+```bash
+sudo apt install debhelper meson ninja-build pkg-config \
+    libgtk-4-dev libadwaita-1-dev libglib2.0-dev libssl-dev cargo rustc
+dpkg-buildpackage -us -uc -b
+sudo apt install ../wren_0.1.0-1_amd64.deb
+```
+
+После установки `.deb` polkit-policy кладётся в `/usr/share/polkit-1/actions/`,
+и пароль admin запрашивается один раз в 5 минут (`auth_admin_keep`), а не на
+каждое подключение.
 
 ## Лицензия
 

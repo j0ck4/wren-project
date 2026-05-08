@@ -1,0 +1,38 @@
+Source: wren
+Section: net
+Priority: optional
+Maintainer: j0ck4 <j0ck4@users.noreply.github.com>
+Build-Depends:
+ debhelper-compat (= 13),
+ cargo,
+ rustc (>= 1.85),
+ meson (>= 1.0),
+ ninja-build,
+ pkg-config,
+ libgtk-4-dev (>= 4.14),
+ libadwaita-1-dev (>= 1.5),
+ libglib2.0-dev,
+ libssl-dev
+Standards-Version: 4.6.2
+Rules-Requires-Root: no
+Homepage: https://github.com/j0ck4/wren-project
+Vcs-Git: https://github.com/j0ck4/wren-project.git
+Vcs-Browser: https://github.com/j0ck4/wren-project
+
+Package: wren
+Architecture: any
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ wireguard-tools,
+ policykit-1 | polkitd
+Recommends: openresolv | resolvconf | systemd-resolved
+Description: Native GTK4 WireGuard VPN client
+ Wren is a modern GTK4 / libadwaita client for managing WireGuard VPN
+ tunnels on Linux. It imports .conf files, connects and disconnects
+ with one click via wg-quick (elevated through polkit), and shows live
+ RX/TX counters from /sys/class/net.
+ .
+ The application follows the GNOME Human Interface Guidelines and
+ ships a polkit policy so the password prompt is required once per
+ admin session, not on every action.

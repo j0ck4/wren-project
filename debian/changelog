@@ -1,0 +1,7 @@
+wren (0.1.0-1) unstable; urgency=medium
+
+  * Initial Debian release.
+  * MVP: import, sidebar, connect/disconnect via pkexec, system tray,
+    transfer counters, quit confirmation.
+
+ -- j0ck4 <j0ck4@users.noreply.github.com>  Fri, 08 May 2026 22:00:00 +0000

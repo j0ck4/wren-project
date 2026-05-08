@@ -1,0 +1,20 @@
+#!/usr/bin/make -f
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+# Use the user's vendored cargo cache if present (offline builds)
+ifneq ($(wildcard $(CURDIR)/vendor),)
+export CARGO_HOME = $(CURDIR)/.cargo-home
+endif
+
+%:
+	dh $@ --buildsystem=meson
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+	    --buildtype=release \
+	    -Dprofile=default
+
+override_dh_auto_test:
+	# Cargo unit tests would need network to pull deps; skip in
+	# Debian build. Run them locally with `cargo test`.

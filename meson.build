@@ -37,6 +37,7 @@ localedir  = prefix / get_option('localedir')
 pkgdatadir = datadir / meson.project_name()
 
 subdir('data')
+subdir('polkit')
 subdir('src')
 
 gnome.post_install(
