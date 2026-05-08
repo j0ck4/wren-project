@@ -1,5 +1,8 @@
 mod application;
 mod config;
+mod models;
+mod storage;
+mod wg;
 mod window;
 
 use std::path::Path;

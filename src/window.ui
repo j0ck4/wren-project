@@ -2,42 +2,111 @@
 <interface>
   <requires lib="gtk" version="4.14"/>
   <requires lib="libadwaita" version="1.5"/>
+
   <template class="WrenWindow" parent="AdwApplicationWindow">
     <property name="title">Wren</property>
     <property name="default-width">900</property>
     <property name="default-height">600</property>
+
     <property name="content">
-      <object class="GtkBox">
-        <property name="orientation">vertical</property>
-        <child>
-          <object class="AdwHeaderBar">
-            <child type="end">
-              <object class="GtkMenuButton">
-                <property name="icon-name">open-menu-symbolic</property>
-                <property name="primary">true</property>
-                <property name="tooltip-text" translatable="yes">Main Menu</property>
-              </object>
-            </child>
-          </object>
-        </child>
-        <child>
-          <object class="AdwStatusPage">
-            <property name="vexpand">true</property>
-            <property name="icon-name">network-vpn-symbolic</property>
-            <property name="title" translatable="yes">No Tunnels Yet</property>
-            <property name="description" translatable="yes">Import a WireGuard configuration file to get started.</property>
+      <object class="AdwNavigationSplitView" id="split_view">
+        <property name="min-sidebar-width">240</property>
+
+        <property name="sidebar">
+          <object class="AdwNavigationPage">
+            <property name="title">Wren</property>
             <property name="child">
-              <object class="GtkButton">
-                <property name="label" translatable="yes">Import .conf</property>
-                <property name="halign">center</property>
-                <style>
-                  <class name="suggested-action"/>
-                  <class name="pill"/>
-                </style>
+              <object class="AdwToolbarView">
+                <child type="top">
+                  <object class="AdwHeaderBar">
+                    <child type="end">
+                      <object class="GtkButton" id="import_button">
+                        <property name="icon-name">document-open-symbolic</property>
+                        <property name="tooltip-text" translatable="yes">Import .conf</property>
+                      </object>
+                    </child>
+                    <child type="end">
+                      <object class="GtkMenuButton">
+                        <property name="icon-name">open-menu-symbolic</property>
+                        <property name="primary">true</property>
+                        <property name="tooltip-text" translatable="yes">Main Menu</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+
+                <property name="content">
+                  <object class="GtkStack" id="sidebar_stack">
+                    <property name="transition-type">crossfade</property>
+
+                    <child>
+                      <object class="GtkStackPage">
+                        <property name="name">empty</property>
+                        <property name="child">
+                          <object class="AdwStatusPage">
+                            <property name="icon-name">network-vpn-symbolic</property>
+                            <property name="title" translatable="yes">No Tunnels Yet</property>
+                            <property name="description" translatable="yes">Import a WireGuard configuration file to get started.</property>
+                            <property name="child">
+                              <object class="GtkButton" id="import_button_empty">
+                                <property name="label" translatable="yes">Import .conf</property>
+                                <property name="halign">center</property>
+                                <style>
+                                  <class name="suggested-action"/>
+                                  <class name="pill"/>
+                                </style>
+                              </object>
+                            </property>
+                          </object>
+                        </property>
+                      </object>
+                    </child>
+
+                    <child>
+                      <object class="GtkStackPage">
+                        <property name="name">list</property>
+                        <property name="child">
+                          <object class="GtkScrolledWindow">
+                            <property name="hscrollbar-policy">never</property>
+                            <child>
+                              <object class="GtkListBox" id="tunnel_list">
+                                <property name="selection-mode">single</property>
+                                <property name="valign">start</property>
+                                <style>
+                                  <class name="navigation-sidebar"/>
+                                </style>
+                              </object>
+                            </child>
+                          </object>
+                        </property>
+                      </object>
+                    </child>
+                  </object>
+                </property>
               </object>
             </property>
           </object>
-        </child>
+        </property>
+
+        <property name="content">
+          <object class="AdwNavigationPage">
+            <property name="title" translatable="yes">Tunnel</property>
+            <property name="child">
+              <object class="AdwToolbarView">
+                <child type="top">
+                  <object class="AdwHeaderBar"/>
+                </child>
+                <property name="content">
+                  <object class="AdwStatusPage">
+                    <property name="icon-name">network-vpn-symbolic</property>
+                    <property name="title" translatable="yes">Select a Tunnel</property>
+                    <property name="description" translatable="yes">Pick a tunnel from the sidebar to view its details.</property>
+                  </object>
+                </property>
+              </object>
+            </property>
+          </object>
+        </property>
       </object>
     </property>
   </template>
