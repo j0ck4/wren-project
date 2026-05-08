@@ -46,6 +46,8 @@ pub fn import(src: &Path) -> Result<Tunnel> {
 }
 
 /// Lists all tunnels currently stored in the config directory.
+/// Files whose stem isn't a valid WireGuard interface name are
+/// renamed in place before being loaded.
 pub fn list() -> Result<Vec<Tunnel>> {
     let dir = tunnels_dir();
     if !dir.exists() {
@@ -61,6 +63,20 @@ pub fn list() -> Result<Vec<Tunnel>> {
         let Some(stem) = path.file_stem().and_then(|s| s.to_str()) else {
             continue;
         };
+
+        let path = match canonical_path(&path, stem) {
+            Ok(p) => p,
+            Err(e) => {
+                tracing::warn!("skipping {}: {e:#}", path.display());
+                continue;
+            }
+        };
+        let name = path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .expect("canonical_path returns a valid stem")
+            .to_string();
+
         let text = match fs::read_to_string(&path) {
             Ok(t) => t,
             Err(e) => {
@@ -75,27 +91,79 @@ pub fn list() -> Result<Vec<Tunnel>> {
                 continue;
             }
         };
-        tunnels.push(Tunnel {
-            name:        stem.to_string(),
-            config_path: path,
-            config,
-        });
+        tunnels.push(Tunnel { name, config_path: path, config });
     }
 
     tunnels.sort_by(|a, b| a.name.cmp(&b.name));
     Ok(tunnels)
 }
 
-fn sanitize_name(name: &str) -> Result<String> {
-    // WireGuard interface names must match `^[a-zA-Z0-9_=+.-]{1,15}$`,
-    // but as a stored filename we are slightly more permissive: only
-    // strip path separators and control chars, then truncate.
-    let cleaned: String = name
-        .chars()
-        .filter(|c| !c.is_control() && *c != '/' && *c != '\\')
-        .collect();
-    if cleaned.is_empty() {
-        return Err(anyhow!("tunnel name is empty after sanitisation"));
+/// Returns `path` unchanged if its stem is already a valid
+/// WireGuard interface name, or renames the file in place to use
+/// the sanitised name and returns the new path.
+fn canonical_path(path: &Path, stem: &str) -> Result<PathBuf> {
+    let sanitised = sanitize_name(stem)?;
+    if sanitised == stem {
+        return Ok(path.to_path_buf());
     }
-    Ok(cleaned)
+    let new_path = path.with_file_name(format!("{sanitised}.conf"));
+    if new_path.exists() && new_path != path {
+        return Err(anyhow!(
+            "cannot rename to {}: target already exists",
+            new_path.display()
+        ));
+    }
+    fs::rename(path, &new_path)
+        .with_context(|| format!("renaming {} → {}", path.display(), new_path.display()))?;
+    tracing::info!("Renamed tunnel: {stem} → {sanitised}");
+    Ok(new_path)
 }
+
+/// Sanitises an arbitrary string into a valid WireGuard interface
+/// name (`^[a-zA-Z0-9_=+.-]{1,15}$`). Invalid characters are
+/// replaced with `-`, runs of `-` are collapsed, and the result is
+/// truncated to 15 characters.
+fn sanitize_name(name: &str) -> Result<String> {
+    let mut cleaned = String::with_capacity(name.len());
+    let mut last_dash = false;
+    for ch in name.chars() {
+        let allowed = ch.is_ascii_alphanumeric() || matches!(ch, '_' | '=' | '+' | '.' | '-');
+        if allowed {
+            cleaned.push(ch);
+            last_dash = ch == '-';
+        } else if !last_dash {
+            cleaned.push('-');
+            last_dash = true;
+        }
+    }
+    let trimmed: String = cleaned.trim_matches('-').chars().take(15).collect();
+    let trimmed = trimmed.trim_end_matches('-').to_string();
+    if trimmed.is_empty() {
+        return Err(anyhow!("tunnel name '{name}' has no valid characters"));
+    }
+    Ok(trimmed)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::sanitize_name;
+
+    #[test]
+    fn truncates_to_fifteen() {
+        assert_eq!(sanitize_name("home-office-laptop").unwrap(), "home-office-lap");
+    }
+
+    #[test]
+    fn replaces_spaces_and_parens() {
+        assert_eq!(
+            sanitize_name("work laptop.vpn (1)").unwrap(),
+            "work-laptop.vpn"
+        );
+    }
+
+    #[test]
+    fn rejects_empty_after_clean() {
+        assert!(sanitize_name("///").is_err());
+    }
+}
+
