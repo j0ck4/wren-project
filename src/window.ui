@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.14"/>
+  <requires lib="libadwaita" version="1.5"/>
+  <template class="WrenWindow" parent="AdwApplicationWindow">
+    <property name="title">Wren</property>
+    <property name="default-width">900</property>
+    <property name="default-height">600</property>
+    <property name="content">
+      <object class="GtkBox">
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="AdwHeaderBar">
+            <child type="end">
+              <object class="GtkMenuButton">
+                <property name="icon-name">open-menu-symbolic</property>
+                <property name="primary">true</property>
+                <property name="tooltip-text" translatable="yes">Главное меню</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwStatusPage">
+            <property name="vexpand">true</property>
+            <property name="icon-name">network-vpn-symbolic</property>
+            <property name="title" translatable="yes">Туннелей пока нет</property>
+            <property name="description" translatable="yes">Импортируйте конфигурацию WireGuard, чтобы начать.</property>
+            <property name="child">
+              <object class="GtkButton">
+                <property name="label" translatable="yes">Импорт .conf</property>
+                <property name="halign">center</property>
+                <style>
+                  <class name="suggested-action"/>
+                  <class name="pill"/>
+                </style>
+              </object>
+            </property>
+          </object>
+        </child>
+      </object>
+    </property>
+  </template>
+</interface>

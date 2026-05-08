@@ -1,0 +1,4 @@
+data/io.github.j0ck4.Wren.desktop.in.in
+data/io.github.j0ck4.Wren.metainfo.xml.in.in
+src/window.ui
+src/main.rs

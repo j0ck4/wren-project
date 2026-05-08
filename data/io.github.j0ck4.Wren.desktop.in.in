@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Wren
+GenericName=WireGuard Client
+Comment=Manage WireGuard VPN tunnels
+Exec=wren
+Icon=@icon@
+Terminal=false
+Type=Application
+Categories=Network;GTK;
+StartupNotify=true
+Keywords=wireguard;vpn;tunnel;
+StartupWMClass=@app-id@

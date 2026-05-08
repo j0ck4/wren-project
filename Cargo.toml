@@ -1,0 +1,41 @@
+[package]
+name = "wren"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+authors = ["j0ck4 <j0ck4@users.noreply.github.com>"]
+description = "Native GTK4 WireGuard client for Ubuntu"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/j0ck4/wren-project"
+readme = "README.md"
+
+[dependencies]
+gtk           = { version = "0.9", package = "gtk4",       features = ["v4_14"] }
+adw           = { version = "0.7", package = "libadwaita", features = ["v1_5"]  }
+glib          = "0.20"
+gio           = "0.20"
+tokio         = { version = "1",   features = ["rt-multi-thread", "macros", "sync", "time", "process", "fs"] }
+async-channel = "2"
+ksni          = "0.2"
+ini           = "1.3"
+serde         = { version = "1",   features = ["derive"] }
+anyhow        = "1"
+thiserror     = "2"
+tracing       = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[profile.release]
+lto           = true
+codegen-units = 1
+strip         = "symbols"
+opt-level     = 3
+
+[lints.rust]
+unsafe_code = "deny"
+
+[lints.clippy]
+all      = { level = "warn",  priority = -1 }
+pedantic = { level = "warn",  priority = -1 }
+module_name_repetitions = "allow"
+must_use_candidate      = "allow"
+missing_errors_doc      = "allow"

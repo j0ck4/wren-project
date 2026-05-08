@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>@app-id@</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <name>Wren</name>
+  <summary>Native GTK4 WireGuard client</summary>
+
+  <description>
+    <p>
+      Wren is a modern, native GTK4 / libadwaita client for managing
+      WireGuard VPN tunnels on Linux.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Import .conf files</li>
+      <li>One-click connect / disconnect</li>
+      <li>System tray indicator</li>
+      <li>Live transfer statistics</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">@app-id@.desktop</launchable>
+
+  <url type="homepage">https://github.com/j0ck4/wren-project</url>
+  <url type="bugtracker">https://github.com/j0ck4/wren-project/issues</url>
+  <url type="vcs-browser">https://github.com/j0ck4/wren-project</url>
+
+  <developer id="io.github.j0ck4">
+    <name>j0ck4</name>
+  </developer>
+
+  <content_rating type="oars-1.1"/>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#a5c8ff</color>
+    <color type="primary" scheme_preference="dark">#1a5fb4</color>
+  </branding>
+
+  <releases>
+    <release version="0.1.0" date="2026-05-08">
+      <description>
+        <p>Initial scaffolding.</p>
+      </description>
+    </release>
+  </releases>
+</component>
