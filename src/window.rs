@@ -58,6 +58,7 @@ mod imp {
         pub busy:           Cell<bool>,
         pub selected_name:  RefCell<Option<String>>,
         pub selected_path:  RefCell<Option<PathBuf>>,
+        pub force_quit:     Cell<bool>,
     }
 
     #[glib::object_subclass]
@@ -122,7 +123,17 @@ mod imp {
     }
 
     impl WidgetImpl for WrenWindow {}
-    impl WindowImpl for WrenWindow {}
+
+    impl WindowImpl for WrenWindow {
+        fn close_request(&self) -> glib::Propagation {
+            if self.force_quit.get() || self.active_set.borrow().is_empty() {
+                return self.parent_close_request();
+            }
+            self.obj().confirm_quit_with_active();
+            glib::Propagation::Stop
+        }
+    }
+
     impl ApplicationWindowImpl for WrenWindow {}
     impl AdwApplicationWindowImpl for WrenWindow {}
 }
@@ -220,6 +231,69 @@ impl WrenWindow {
     /// Adds a transient notification at the bottom of the window.
     fn toast(&self, message: &str) {
         self.imp().toast_overlay.add_toast(adw::Toast::new(message));
+    }
+
+    fn confirm_quit_with_active(&self) {
+        glib::spawn_future_local(glib::clone!(
+            #[weak(rename_to = win)] self,
+            async move {
+                let active: Vec<String> = win
+                    .imp()
+                    .active_set
+                    .borrow()
+                    .iter()
+                    .cloned()
+                    .collect();
+                let count = active.len();
+                let body = format!(
+                    "{count} tunnel{plural} {verb} still active and will keep \
+                     running after Wren closes.",
+                    plural = if count == 1 { "" } else { "s" },
+                    verb   = if count == 1 { "is" } else { "are" },
+                );
+
+                let dialog = adw::AlertDialog::new(Some("Active tunnels"), Some(&body));
+                dialog.add_responses(&[
+                    ("cancel",     "Cancel"),
+                    ("disconnect", "Disconnect & Quit"),
+                    ("quit",       "Quit Anyway"),
+                ]);
+                dialog.set_default_response(Some("cancel"));
+                dialog.set_close_response("cancel");
+                dialog.set_response_appearance("disconnect", adw::ResponseAppearance::Destructive);
+
+                let response = dialog.choose_future(&win).await;
+                match response.as_str() {
+                    "quit" => {
+                        win.imp().force_quit.set(true);
+                        win.close();
+                    }
+                    "disconnect" => {
+                        win.disconnect_all_then_close(active).await;
+                    }
+                    _ => {}
+                }
+            }
+        ));
+    }
+
+    async fn disconnect_all_then_close(&self, names: Vec<String>) {
+        let store = self.store();
+        let mut paths: Vec<PathBuf> = Vec::with_capacity(names.len());
+        for i in 0..store.n_items() {
+            let Some(item) = store.item(i) else { continue };
+            let Some(t) = item.downcast_ref::<TunnelObject>() else { continue };
+            if names.contains(&t.name()) {
+                paths.push(t.config_path());
+            }
+        }
+        for path in paths {
+            if let Err(e) = manager::down(&path).await {
+                tracing::error!("disconnect_all_then_close: {}: {e:#}", path.display());
+            }
+        }
+        self.imp().force_quit.set(true);
+        self.close();
     }
 
     fn update_connect_button(&self) {
