@@ -8,9 +8,9 @@ use crate::wg::ParsedConfig;
 /// imported into our config dir, parsed and ready to use.
 #[derive(Debug, Clone)]
 pub struct Tunnel {
-    pub name:        String,
+    pub name: String,
     pub config_path: PathBuf,
-    pub config:      ParsedConfig,
+    pub config: ParsedConfig,
 }
 
 mod imp {

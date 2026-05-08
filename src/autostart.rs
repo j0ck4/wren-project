@@ -24,16 +24,14 @@ pub fn enable() -> Result<()> {
         .parent()
         .context("autostart file has no parent directory")?;
     fs::create_dir_all(dir).with_context(|| format!("creating {}", dir.display()))?;
-    fs::write(&path, content())
-        .with_context(|| format!("writing {}", path.display()))?;
+    fs::write(&path, content()).with_context(|| format!("writing {}", path.display()))?;
     Ok(())
 }
 
 pub fn disable() -> Result<()> {
     let path = autostart_file();
     if path.exists() {
-        fs::remove_file(&path)
-            .with_context(|| format!("removing {}", path.display()))?;
+        fs::remove_file(&path).with_context(|| format!("removing {}", path.display()))?;
     }
     Ok(())
 }

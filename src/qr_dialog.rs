@@ -8,7 +8,7 @@
 
 use adw::prelude::*;
 use anyhow::Result;
-use gtk::{gdk, gdk_pixbuf, glib, prelude::*};
+use gtk::{gdk, gdk_pixbuf, glib};
 use qrcode::{Color as QrColor, QrCode};
 
 const MODULE_PIXELS: usize = 8;
@@ -34,9 +34,7 @@ pub fn show(parent: &impl IsA<gtk::Widget>, name: &str, conf: &str) {
 
     match render_qr(conf) {
         Ok(texture) => {
-            let frame = gtk::Frame::builder()
-                .halign(gtk::Align::Center)
-                .build();
+            let frame = gtk::Frame::builder().halign(gtk::Align::Center).build();
             let picture = gtk::Picture::for_paintable(&texture);
             picture.set_size_request(300, 300);
             picture.set_content_fit(gtk::ContentFit::Contain);
@@ -105,7 +103,7 @@ fn render_qr(text: &str) -> Result<gdk::Texture> {
                     let py = quiet_pixels + y * MODULE_PIXELS + dy;
                     let px = quiet_pixels + x * MODULE_PIXELS + dx;
                     let offset = (py * pixel_width + px) * 3;
-                    buf[offset]     = 0;
+                    buf[offset] = 0;
                     buf[offset + 1] = 0;
                     buf[offset + 2] = 0;
                 }

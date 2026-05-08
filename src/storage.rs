@@ -1,18 +1,23 @@
-//! Tunnel persistence under `~/.config/wren/tunnels/`.
+//! Tunnel persistence under `$XDG_CONFIG_HOME/wren/tunnels/`
+//! (`~/.config/wren/tunnels/` on most systems).
 
 use std::{
-    fs,
+    env, fs,
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
 };
 
 use anyhow::{Context, Result, anyhow};
-use gtk::glib;
 
 use crate::{models::Tunnel, wg::parser};
 
 pub fn config_dir() -> PathBuf {
-    glib::user_config_dir().join(env!("CARGO_PKG_NAME"))
+    let base = env::var_os("XDG_CONFIG_HOME")
+        .filter(|v| !v.is_empty())
+        .map(PathBuf::from)
+        .or_else(|| env::var_os("HOME").map(|h| PathBuf::from(h).join(".config")))
+        .unwrap_or_else(|| PathBuf::from("."));
+    base.join(env!("CARGO_PKG_NAME"))
 }
 
 pub fn tunnels_dir() -> PathBuf {
@@ -31,23 +36,24 @@ pub fn import(src: &Path) -> Result<Tunnel> {
     let name = sanitize_name(&stem)?;
 
     let dir = tunnels_dir();
-    fs::create_dir_all(&dir)
-        .with_context(|| format!("creating tunnel dir {}", dir.display()))?;
+    fs::create_dir_all(&dir).with_context(|| format!("creating tunnel dir {}", dir.display()))?;
 
     let dest = dir.join(format!("{name}.conf"));
-    let text = fs::read_to_string(src)
-        .with_context(|| format!("reading {}", src.display()))?;
+    let text = fs::read_to_string(src).with_context(|| format!("reading {}", src.display()))?;
     let config = parser::parse(&text)
         .with_context(|| format!("parsing WireGuard config {}", src.display()))?;
 
-    fs::write(&dest, &text)
-        .with_context(|| format!("writing {}", dest.display()))?;
+    fs::write(&dest, &text).with_context(|| format!("writing {}", dest.display()))?;
     // Tunnel configs hold private keys; tighten permissions to
     // user-only so wg-quick stops warning about world access.
     fs::set_permissions(&dest, fs::Permissions::from_mode(0o600))
         .with_context(|| format!("chmod 0600 {}", dest.display()))?;
 
-    Ok(Tunnel { name, config_path: dest, config })
+    Ok(Tunnel {
+        name,
+        config_path: dest,
+        config,
+    })
 }
 
 /// Lists all tunnels currently stored in the config directory.
@@ -98,7 +104,11 @@ pub fn list() -> Result<Vec<Tunnel>> {
                 continue;
             }
         };
-        tunnels.push(Tunnel { name, config_path: path, config });
+        tunnels.push(Tunnel {
+            name,
+            config_path: path,
+            config,
+        });
     }
 
     tunnels.sort_by(|a, b| a.name.cmp(&b.name));
@@ -153,11 +163,43 @@ fn sanitize_name(name: &str) -> Result<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::sanitize_name;
+    use std::sync::Mutex;
+
+    use super::*;
+
+    // env::set_var is process-global, so storage tests serialise
+    // to avoid one test's XDG_CONFIG_HOME leaking into another.
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    #[allow(unsafe_code)]
+    fn isolated<F: FnOnce()>(test: F) {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let temp = tempfile::TempDir::new().unwrap();
+        // SAFETY: env::set_var is process-wide; the ENV_LOCK
+        // mutex above serialises all storage tests so no other
+        // thread reads or writes env vars concurrently.
+        unsafe {
+            env::set_var("XDG_CONFIG_HOME", temp.path());
+        }
+        test();
+    }
+
+    const SAMPLE_CONF: &str = "\
+[Interface]
+PrivateKey = aGVsbG93b3JsZGhlbGxvd29ybGRoZWxsb3dvcmxkaGVsbA=
+Address = 10.0.0.2/32
+
+[Peer]
+PublicKey = cHViMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+AllowedIPs = 0.0.0.0/0
+";
 
     #[test]
     fn truncates_to_fifteen() {
-        assert_eq!(sanitize_name("home-office-laptop").unwrap(), "home-office-lap");
+        assert_eq!(
+            sanitize_name("home-office-laptop").unwrap(),
+            "home-office-lap"
+        );
     }
 
     #[test]
@@ -172,5 +214,63 @@ mod tests {
     fn rejects_empty_after_clean() {
         assert!(sanitize_name("///").is_err());
     }
-}
 
+    #[test]
+    fn import_then_list_round_trip() {
+        isolated(|| {
+            let src_dir = tempfile::TempDir::new().unwrap();
+            let src = src_dir.path().join("home-vpn.conf");
+            fs::write(&src, SAMPLE_CONF).unwrap();
+
+            let imported = import(&src).unwrap();
+            assert_eq!(imported.name, "home-vpn");
+            assert!(imported.config_path.exists());
+            assert_eq!(imported.config.peers.len(), 1);
+
+            let listed = list().unwrap();
+            assert_eq!(listed.len(), 1);
+            assert_eq!(listed[0].name, "home-vpn");
+            assert_eq!(listed[0].config.interface.address, ["10.0.0.2/32"]);
+        });
+    }
+
+    #[test]
+    fn import_renames_overlong_filename() {
+        isolated(|| {
+            let src_dir = tempfile::TempDir::new().unwrap();
+            let src = src_dir.path().join("home-office-laptop.conf");
+            fs::write(&src, SAMPLE_CONF).unwrap();
+
+            let imported = import(&src).unwrap();
+            assert_eq!(imported.name, "home-office-lap");
+            assert!(imported.name.len() <= 15);
+
+            let listed = list().unwrap();
+            assert_eq!(listed.len(), 1);
+            assert_eq!(listed[0].name, "home-office-lap");
+        });
+    }
+
+    #[test]
+    fn list_renames_pre_existing_bad_filename() {
+        isolated(|| {
+            let dir = tunnels_dir();
+            fs::create_dir_all(&dir).unwrap();
+            fs::write(dir.join("home-office-laptop.conf"), SAMPLE_CONF).unwrap();
+
+            let listed = list().unwrap();
+            assert_eq!(listed.len(), 1);
+            assert_eq!(listed[0].name, "home-office-lap");
+            // The renamed file should now exist on disk.
+            assert!(dir.join("home-office-lap.conf").exists());
+            assert!(!dir.join("home-office-laptop.conf").exists());
+        });
+    }
+
+    #[test]
+    fn list_returns_empty_when_dir_missing() {
+        isolated(|| {
+            assert!(list().unwrap().is_empty());
+        });
+    }
+}

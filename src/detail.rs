@@ -12,13 +12,13 @@ mod imp {
     #[template(resource = "/io/github/j0ck4/Wren/detail.ui")]
     pub struct TunnelDetail {
         #[template_child]
-        pub content_box:    TemplateChild<gtk::Box>,
+        pub content_box: TemplateChild<gtk::Box>,
         #[template_child]
         pub transfer_group: TemplateChild<adw::PreferencesGroup>,
         #[template_child]
-        pub rx_row:         TemplateChild<adw::ActionRow>,
+        pub rx_row: TemplateChild<adw::ActionRow>,
         #[template_child]
-        pub tx_row:         TemplateChild<adw::ActionRow>,
+        pub tx_row: TemplateChild<adw::ActionRow>,
 
         pub poll_source: RefCell<Option<glib::SourceId>>,
     }
@@ -114,7 +114,8 @@ impl TunnelDetail {
 
     fn poll_now(&self, name: String) {
         glib::spawn_future_local(glib::clone!(
-            #[weak(rename_to = detail)] self,
+            #[weak(rename_to = detail)]
+            self,
             async move {
                 match manager::transfer(&name).await {
                     Ok((rx, tx)) => {
@@ -132,9 +133,7 @@ impl TunnelDetail {
 }
 
 fn interface_group(tunnel: &Tunnel) -> adw::PreferencesGroup {
-    let group = adw::PreferencesGroup::builder()
-        .title("Interface")
-        .build();
+    let group = adw::PreferencesGroup::builder().title("Interface").build();
 
     let iface = &tunnel.config.interface;
 
@@ -174,7 +173,10 @@ fn peers_group(tunnel: &Tunnel) -> adw::PreferencesGroup {
             row.add_row(&property_row("Endpoint", endpoint));
         }
         if let Some(keepalive) = peer.persistent_keepalive {
-            row.add_row(&property_row("Persistent Keepalive", &format!("{keepalive} s")));
+            row.add_row(&property_row(
+                "Persistent Keepalive",
+                &format!("{keepalive} s"),
+            ));
         }
 
         group.add(&row);
@@ -199,7 +201,14 @@ fn short_key(key: &str) -> String {
         return key.to_string();
     }
     let head: String = chars.iter().take(6).collect();
-    let tail: String = chars.iter().rev().take(6).collect::<Vec<_>>().into_iter().rev().collect();
+    let tail: String = chars
+        .iter()
+        .rev()
+        .take(6)
+        .collect::<Vec<_>>()
+        .into_iter()
+        .rev()
+        .collect();
     format!("{head}…{tail}")
 }
 

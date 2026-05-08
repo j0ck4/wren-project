@@ -99,11 +99,16 @@ impl WrenApplication {
             &autostart::is_enabled().to_variant(),
         );
         autostart_action.connect_change_state(glib::clone!(
-            #[weak(rename_to = app)] self,
+            #[weak(rename_to = app)]
+            self,
             move |action, requested| {
                 let Some(requested) = requested else { return };
                 let enable: bool = requested.get().unwrap_or(false);
-                let res = if enable { autostart::enable() } else { autostart::disable() };
+                let res = if enable {
+                    autostart::enable()
+                } else {
+                    autostart::disable()
+                };
                 match res {
                     Ok(()) => action.set_state(requested),
                     Err(e) => {
@@ -111,7 +116,9 @@ impl WrenApplication {
                         if let Some(window) = app.active_window().and_downcast::<WrenWindow>() {
                             window.show_toast(&format!(
                                 "Could not change autostart: {}",
-                                e.chain().last().map_or_else(|| e.to_string(), |c| c.to_string())
+                                e.chain()
+                                    .last()
+                                    .map_or_else(|| e.to_string(), |c| c.to_string())
                             ));
                         }
                     }

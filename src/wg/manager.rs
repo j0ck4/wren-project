@@ -7,7 +7,8 @@
 use std::{collections::HashSet, ffi::OsStr, path::Path};
 
 use anyhow::{Context, Result, bail};
-use gtk::{gio, prelude::*};
+use gtk::gio;
+use gtk::prelude::*;
 
 pub async fn up(config_path: &Path) -> Result<()> {
     let path = config_path.to_string_lossy();

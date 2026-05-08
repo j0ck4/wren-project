@@ -15,13 +15,13 @@ pub enum TrayMessage {
 
 #[derive(Debug, Clone)]
 pub struct TunnelEntry {
-    pub name:   String,
+    pub name: String,
     pub active: bool,
 }
 
 pub struct WrenTray {
     pub tunnels: Vec<TunnelEntry>,
-    pub tx:      async_channel::Sender<TrayMessage>,
+    pub tx: async_channel::Sender<TrayMessage>,
 }
 
 impl ksni::Tray for WrenTray {
@@ -44,9 +44,9 @@ impl ksni::Tray for WrenTray {
     fn tool_tip(&self) -> ToolTip {
         let active = self.tunnels.iter().filter(|t| t.active).count();
         ToolTip {
-            icon_name:   self.icon_name(),
+            icon_name: self.icon_name(),
             icon_pixmap: vec![],
-            title:       "Wren".into(),
+            title: "Wren".into(),
             description: if active == 0 {
                 "No active tunnels".into()
             } else {
@@ -147,16 +147,17 @@ impl WrenTrayHandle {
 /// tray thread exits cleanly with a logged warning and the app
 /// keeps working without a tray icon.
 pub fn spawn(tx: async_channel::Sender<TrayMessage>) -> WrenTrayHandle {
-    let tray = WrenTray { tunnels: Vec::new(), tx };
+    let tray = WrenTray {
+        tunnels: Vec::new(),
+        tx,
+    };
     let service = TrayService::new(tray);
     let handle = service.handle();
     std::thread::Builder::new()
         .name("wren-tray".into())
         .spawn(move || {
             if let Err(e) = service.run() {
-                tracing::warn!(
-                    "Tray service unavailable (StatusNotifierWatcher missing?): {e}"
-                );
+                tracing::warn!("Tray service unavailable (StatusNotifierWatcher missing?): {e}");
             }
         })
         .expect("spawning tray thread");

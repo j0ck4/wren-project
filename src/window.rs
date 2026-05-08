@@ -33,34 +33,34 @@ mod imp {
     #[template(resource = "/io/github/j0ck4/Wren/window.ui")]
     pub struct WrenWindow {
         #[template_child]
-        pub split_view:          TemplateChild<adw::NavigationSplitView>,
+        pub split_view: TemplateChild<adw::NavigationSplitView>,
         #[template_child]
-        pub sidebar_stack:       TemplateChild<gtk::Stack>,
+        pub sidebar_stack: TemplateChild<gtk::Stack>,
         #[template_child]
-        pub tunnel_list:         TemplateChild<gtk::ListBox>,
+        pub tunnel_list: TemplateChild<gtk::ListBox>,
         #[template_child]
-        pub import_button:       TemplateChild<gtk::Button>,
+        pub import_button: TemplateChild<gtk::Button>,
         #[template_child]
         pub import_button_empty: TemplateChild<gtk::Button>,
         #[template_child]
-        pub content_page:        TemplateChild<adw::NavigationPage>,
+        pub content_page: TemplateChild<adw::NavigationPage>,
         #[template_child]
-        pub content_stack:       TemplateChild<gtk::Stack>,
+        pub content_stack: TemplateChild<gtk::Stack>,
         #[template_child]
-        pub tunnel_detail:       TemplateChild<TunnelDetail>,
+        pub tunnel_detail: TemplateChild<TunnelDetail>,
         #[template_child]
-        pub connect_button:      TemplateChild<gtk::Button>,
+        pub connect_button: TemplateChild<gtk::Button>,
         #[template_child]
-        pub share_button:        TemplateChild<gtk::Button>,
+        pub share_button: TemplateChild<gtk::Button>,
         #[template_child]
-        pub toast_overlay:       TemplateChild<adw::ToastOverlay>,
+        pub toast_overlay: TemplateChild<adw::ToastOverlay>,
 
-        pub tunnels:        OnceCell<gio::ListStore>,
-        pub active_set:     RefCell<HashSet<String>>,
-        pub busy:           Cell<bool>,
-        pub selected_name:  RefCell<Option<String>>,
-        pub selected_path:  RefCell<Option<PathBuf>>,
-        pub force_quit:     Cell<bool>,
+        pub tunnels: OnceCell<gio::ListStore>,
+        pub active_set: RefCell<HashSet<String>>,
+        pub busy: Cell<bool>,
+        pub selected_name: RefCell<Option<String>>,
+        pub selected_path: RefCell<Option<PathBuf>>,
+        pub force_quit: Cell<bool>,
     }
 
     #[glib::object_subclass]
@@ -101,26 +101,31 @@ mod imp {
 
             let win = self.obj().clone();
             self.import_button.connect_clicked(glib::clone!(
-                #[weak] win,
+                #[weak]
+                win,
                 move |_| win.open_import_dialog()
             ));
             self.import_button_empty.connect_clicked(glib::clone!(
-                #[weak] win,
+                #[weak]
+                win,
                 move |_| win.open_import_dialog()
             ));
 
             self.tunnel_list.connect_row_activated(glib::clone!(
-                #[weak] win,
+                #[weak]
+                win,
                 move |_, row| win.show_tunnel_at(row.index())
             ));
 
             self.connect_button.connect_clicked(glib::clone!(
-                #[weak] win,
+                #[weak]
+                win,
                 move |_| win.toggle_selected()
             ));
 
             self.share_button.connect_clicked(glib::clone!(
-                #[weak] win,
+                #[weak]
+                win,
                 move |_| win.show_qr_for_selected()
             ));
 
@@ -188,9 +193,15 @@ impl WrenWindow {
     }
 
     fn show_tunnel_at(&self, index: i32) {
-        let Ok(idx) = u32::try_from(index) else { return };
-        let Some(item) = self.store().item(idx) else { return };
-        let Some(tunnel_obj) = item.downcast_ref::<TunnelObject>() else { return };
+        let Ok(idx) = u32::try_from(index) else {
+            return;
+        };
+        let Some(item) = self.store().item(idx) else {
+            return;
+        };
+        let Some(tunnel_obj) = item.downcast_ref::<TunnelObject>() else {
+            return;
+        };
         tunnel_obj.with(|t| self.show_tunnel_detail(t));
     }
 
@@ -224,8 +235,12 @@ impl WrenWindow {
 
     fn show_qr_for_selected(&self) {
         let imp = self.imp();
-        let Some(path) = imp.selected_path.borrow().clone() else { return };
-        let Some(name) = imp.selected_name.borrow().clone() else { return };
+        let Some(path) = imp.selected_path.borrow().clone() else {
+            return;
+        };
+        let Some(name) = imp.selected_name.borrow().clone() else {
+            return;
+        };
 
         match std::fs::read_to_string(&path) {
             Ok(conf) => qr_dialog::show(self, &name, &conf),
@@ -238,7 +253,8 @@ impl WrenWindow {
 
     fn refresh_active_set(&self) {
         glib::spawn_future_local(glib::clone!(
-            #[weak(rename_to = win)] self,
+            #[weak(rename_to = win)]
+            self,
             async move {
                 match manager::active_interfaces().await {
                     Ok(set) => {
@@ -267,28 +283,23 @@ impl WrenWindow {
 
     fn confirm_quit_with_active(&self) {
         glib::spawn_future_local(glib::clone!(
-            #[weak(rename_to = win)] self,
+            #[weak(rename_to = win)]
+            self,
             async move {
-                let active: Vec<String> = win
-                    .imp()
-                    .active_set
-                    .borrow()
-                    .iter()
-                    .cloned()
-                    .collect();
+                let active: Vec<String> = win.imp().active_set.borrow().iter().cloned().collect();
                 let count = active.len();
                 let body = format!(
                     "{count} tunnel{plural} {verb} still active and will keep \
                      running after Wren closes.",
                     plural = if count == 1 { "" } else { "s" },
-                    verb   = if count == 1 { "is" } else { "are" },
+                    verb = if count == 1 { "is" } else { "are" },
                 );
 
                 let dialog = adw::AlertDialog::new(Some("Active tunnels"), Some(&body));
                 dialog.add_responses(&[
-                    ("cancel",     "Cancel"),
+                    ("cancel", "Cancel"),
                     ("disconnect", "Disconnect & Quit"),
-                    ("quit",       "Quit Anyway"),
+                    ("quit", "Quit Anyway"),
                 ]);
                 dialog.set_default_response(Some("cancel"));
                 dialog.set_close_response("cancel");
@@ -314,7 +325,9 @@ impl WrenWindow {
         let mut paths: Vec<PathBuf> = Vec::with_capacity(names.len());
         for i in 0..store.n_items() {
             let Some(item) = store.item(i) else { continue };
-            let Some(t) = item.downcast_ref::<TunnelObject>() else { continue };
+            let Some(t) = item.downcast_ref::<TunnelObject>() else {
+                continue;
+            };
             if names.contains(&t.name()) {
                 paths.push(t.config_path());
             }
@@ -330,7 +343,9 @@ impl WrenWindow {
 
     fn update_detail_active_state(&self) {
         let imp = self.imp();
-        let Some(name) = imp.selected_name.borrow().clone() else { return };
+        let Some(name) = imp.selected_name.borrow().clone() else {
+            return;
+        };
         let active = imp.active_set.borrow().contains(&name);
         imp.tunnel_detail.set_active_state(&name, active);
     }
@@ -367,8 +382,12 @@ impl WrenWindow {
 
     fn toggle_selected(&self) {
         let imp = self.imp();
-        let Some(name) = imp.selected_name.borrow().clone() else { return };
-        let Some(path) = imp.selected_path.borrow().clone() else { return };
+        let Some(name) = imp.selected_name.borrow().clone() else {
+            return;
+        };
+        let Some(path) = imp.selected_path.borrow().clone() else {
+            return;
+        };
         let is_active = imp.active_set.borrow().contains(&name);
         self.run_toggle(name, path, is_active);
     }
@@ -377,7 +396,9 @@ impl WrenWindow {
         let store = self.store();
         for i in 0..store.n_items() {
             let Some(item) = store.item(i) else { continue };
-            let Some(t) = item.downcast_ref::<TunnelObject>() else { continue };
+            let Some(t) = item.downcast_ref::<TunnelObject>() else {
+                continue;
+            };
             if t.name() == target {
                 let name = t.name();
                 let path = t.config_path();
@@ -398,7 +419,8 @@ impl WrenWindow {
         self.update_connect_button();
 
         glib::spawn_future_local(glib::clone!(
-            #[weak(rename_to = win)] self,
+            #[weak(rename_to = win)]
+            self,
             async move {
                 let action = if is_active { "Disconnect" } else { "Connect" };
                 let res = if is_active {
@@ -408,10 +430,18 @@ impl WrenWindow {
                 };
                 match &res {
                     Ok(()) => {
-                        let verb = if is_active { "disconnected" } else { "connected" };
+                        let verb = if is_active {
+                            "disconnected"
+                        } else {
+                            "connected"
+                        };
                         win.toast(&format!("{name} {verb}"));
                         if let Some(app) = win.application().and_downcast::<WrenApplication>() {
-                            let title = if is_active { "Tunnel disconnected" } else { "Tunnel connected" };
+                            let title = if is_active {
+                                "Tunnel disconnected"
+                            } else {
+                                "Tunnel connected"
+                            };
                             app.notify(title, &name, true);
                         }
                     }
@@ -435,7 +465,9 @@ impl WrenWindow {
     }
 
     fn push_tray_update(&self) {
-        let Some(app) = self.application().and_downcast::<WrenApplication>() else { return };
+        let Some(app) = self.application().and_downcast::<WrenApplication>() else {
+            return;
+        };
         let Some(tray) = app.tray() else { return };
 
         let store = self.store();
@@ -443,10 +475,15 @@ impl WrenWindow {
         let mut entries = Vec::with_capacity(store.n_items() as usize);
         for i in 0..store.n_items() {
             let Some(item) = store.item(i) else { continue };
-            let Some(t) = item.downcast_ref::<TunnelObject>() else { continue };
+            let Some(t) = item.downcast_ref::<TunnelObject>() else {
+                continue;
+            };
             let name = t.name();
             let is_active = active.contains(&name);
-            entries.push(TunnelEntry { name, active: is_active });
+            entries.push(TunnelEntry {
+                name,
+                active: is_active,
+            });
         }
         drop(active);
         tray.set_tunnels(entries);
@@ -471,7 +508,8 @@ impl WrenWindow {
             Some(self),
             None::<&gio::Cancellable>,
             glib::clone!(
-                #[weak(rename_to = win)] self,
+                #[weak(rename_to = win)]
+                self,
                 move |result| match result {
                     Ok(file) => {
                         let Some(path) = file.path() else {
@@ -488,9 +526,7 @@ impl WrenWindow {
                                 tracing::error!("Import failed: {e:#}");
                                 win.toast(&format!(
                                     "Could not import {}: {}",
-                                    path.file_name()
-                                        .and_then(|n| n.to_str())
-                                        .unwrap_or("file"),
+                                    path.file_name().and_then(|n| n.to_str()).unwrap_or("file"),
                                     friendly_error(&e)
                                 ));
                             }

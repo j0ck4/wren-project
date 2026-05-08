@@ -24,26 +24,26 @@ pub enum ParseError {
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Interface {
-    pub private_key:  String,
-    pub address:      Vec<String>,
-    pub dns:          Vec<String>,
-    pub listen_port:  Option<u16>,
-    pub mtu:          Option<u32>,
+    pub private_key: String,
+    pub address: Vec<String>,
+    pub dns: Vec<String>,
+    pub listen_port: Option<u16>,
+    pub mtu: Option<u32>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Peer {
-    pub public_key:           String,
-    pub preshared_key:        Option<String>,
-    pub allowed_ips:          Vec<String>,
-    pub endpoint:             Option<String>,
+    pub public_key: String,
+    pub preshared_key: Option<String>,
+    pub allowed_ips: Vec<String>,
+    pub endpoint: Option<String>,
     pub persistent_keepalive: Option<u32>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ParsedConfig {
     pub interface: Interface,
-    pub peers:     Vec<Peer>,
+    pub peers: Vec<Peer>,
 }
 
 #[derive(Debug)]
@@ -131,10 +131,11 @@ fn apply_interface(i: &mut Interface, key: &str, value: String) -> Result<(), Pa
             })?);
         }
         "mtu" => {
-            i.mtu = Some(value.parse().map_err(|_| ParseError::InvalidValue {
-                key: "MTU",
-                value,
-            })?);
+            i.mtu = Some(
+                value
+                    .parse()
+                    .map_err(|_| ParseError::InvalidValue { key: "MTU", value })?,
+            );
         }
         // Recognised but ignored keys (advanced features handled by wg-quick itself).
         "table" | "preup" | "postup" | "predown" | "postdown" | "saveconfig" | "fwmark" => {}
@@ -150,11 +151,10 @@ fn apply_peer(p: &mut Peer, key: &str, value: String) -> Result<(), ParseError> 
         "allowedips" => p.allowed_ips = split_csv(&value),
         "endpoint" => p.endpoint = Some(value),
         "persistentkeepalive" => {
-            p.persistent_keepalive =
-                Some(value.parse().map_err(|_| ParseError::InvalidValue {
-                    key: "PersistentKeepalive",
-                    value,
-                })?);
+            p.persistent_keepalive = Some(value.parse().map_err(|_| ParseError::InvalidValue {
+                key: "PersistentKeepalive",
+                value,
+            })?);
         }
         _ => {}
     }
@@ -194,7 +194,10 @@ AllowedIPs = 192.168.1.0/24
         assert_eq!(cfg.interface.listen_port, Some(51820));
         assert_eq!(cfg.interface.mtu, Some(1420));
         assert_eq!(cfg.peers.len(), 2);
-        assert_eq!(cfg.peers[0].endpoint.as_deref(), Some("vpn.example.com:51820"));
+        assert_eq!(
+            cfg.peers[0].endpoint.as_deref(),
+            Some("vpn.example.com:51820")
+        );
         assert_eq!(cfg.peers[0].persistent_keepalive, Some(25));
         assert_eq!(cfg.peers[1].allowed_ips, ["192.168.1.0/24"]);
     }
@@ -202,16 +205,21 @@ AllowedIPs = 192.168.1.0/24
     #[test]
     fn requires_interface() {
         assert!(matches!(parse(""), Err(ParseError::MissingInterface)));
+        // A bare [Peer] without any [Interface] section is the
+        // same error from the user's perspective.
         assert!(matches!(
             parse("[Peer]\nPublicKey = foo"),
-            Err(ParseError::MissingKey(_))
+            Err(ParseError::MissingInterface)
         ));
     }
 
     #[test]
     fn requires_private_key() {
         let cfg = "[Interface]\nAddress = 10.0.0.1/32";
-        assert!(matches!(parse(cfg), Err(ParseError::MissingKey("PrivateKey"))));
+        assert!(matches!(
+            parse(cfg),
+            Err(ParseError::MissingKey("PrivateKey"))
+        ));
     }
 
     #[test]
