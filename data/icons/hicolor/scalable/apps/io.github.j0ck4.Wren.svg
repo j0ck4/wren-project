@@ -2,12 +2,28 @@
 <svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#3584e4"/>
-      <stop offset="1" stop-color="#1a5fb4"/>
+      <stop offset="0" stop-color="#62a0ea"/>
+      <stop offset="1" stop-color="#1c71d8"/>
     </linearGradient>
   </defs>
-  <rect x="8" y="8" width="112" height="112" rx="24" fill="url(#bg)"/>
-  <path d="M32 44 L48 88 L64 56 L80 88 L96 44"
-        fill="none" stroke="white" stroke-width="8"
-        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#bg)"/>
+
+  <!-- Stylised W with a tail flourish on the right -->
+  <path d="
+    M 28 38
+    L 44 92
+    L 58 56
+    L 70 56
+    L 84 92
+    L 100 38
+  "
+        fill="none"
+        stroke="#ffffff"
+        stroke-width="12"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- Wren's eye accent -->
+  <circle cx="100" cy="38" r="6" fill="#f5c211"/>
 </svg>

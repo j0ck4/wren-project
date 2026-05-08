@@ -50,3 +50,9 @@ install_data(
   install_dir: datadir / 'icons' / 'hicolor' / 'scalable' / 'apps',
   rename: application_id + '.svg',
 )
+
+install_data(
+  'icons' / 'hicolor' / 'symbolic' / 'apps' / 'io.github.j0ck4.Wren-symbolic.svg',
+  install_dir: datadir / 'icons' / 'hicolor' / 'symbolic' / 'apps',
+  rename: application_id + '-symbolic.svg',
+)

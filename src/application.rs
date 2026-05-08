@@ -1,7 +1,7 @@
 use std::cell::OnceCell;
 
-use adw::subclass::prelude::*;
-use gtk::{gio, glib, prelude::*};
+use adw::{prelude::*, subclass::prelude::*};
+use gtk::{gio, glib};
 
 use crate::{
     config,
@@ -29,7 +29,9 @@ mod imp {
     impl ApplicationImpl for WrenApplication {
         fn startup(&self) {
             self.parent_startup();
-            self.obj().start_tray();
+            let app = self.obj();
+            app.install_actions();
+            app.start_tray();
         }
 
         fn activate(&self) {
@@ -62,6 +64,31 @@ impl WrenApplication {
 
     pub fn tray(&self) -> Option<&WrenTrayHandle> {
         self.imp().tray.get()
+    }
+
+    fn install_actions(&self) {
+        let about = gio::ActionEntry::builder("about")
+            .activate(|app: &Self, _, _| app.show_about())
+            .build();
+        let quit = gio::ActionEntry::builder("quit")
+            .activate(|app: &Self, _, _| app.quit())
+            .build();
+        self.add_action_entries([about, quit]);
+        self.set_accels_for_action("app.quit", &["<Primary>q"]);
+    }
+
+    fn show_about(&self) {
+        let dialog = adw::AboutDialog::builder()
+            .application_name("Wren")
+            .application_icon(config::APP_ID)
+            .version(config::VERSION)
+            .developer_name("j0ck4")
+            .website("https://github.com/j0ck4/wren-project")
+            .issue_url("https://github.com/j0ck4/wren-project/issues")
+            .copyright("© 2026 j0ck4")
+            .license_type(gtk::License::Gpl30)
+            .build();
+        dialog.present(self.active_window().as_ref());
     }
 
     fn start_tray(&self) {
