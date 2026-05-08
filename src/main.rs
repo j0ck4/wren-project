@@ -3,6 +3,7 @@ mod autostart;
 mod config;
 mod detail;
 mod models;
+mod qr_dialog;
 mod storage;
 mod tray;
 mod wg;

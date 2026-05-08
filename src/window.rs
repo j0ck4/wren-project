@@ -11,7 +11,7 @@ use crate::{
     application::WrenApplication,
     detail::TunnelDetail,
     models::{Tunnel, TunnelObject},
-    storage,
+    qr_dialog, storage,
     tray::TunnelEntry,
     wg::manager,
 };
@@ -50,6 +50,8 @@ mod imp {
         pub tunnel_detail:       TemplateChild<TunnelDetail>,
         #[template_child]
         pub connect_button:      TemplateChild<gtk::Button>,
+        #[template_child]
+        pub share_button:        TemplateChild<gtk::Button>,
         #[template_child]
         pub toast_overlay:       TemplateChild<adw::ToastOverlay>,
 
@@ -115,6 +117,11 @@ mod imp {
             self.connect_button.connect_clicked(glib::clone!(
                 #[weak] win,
                 move |_| win.toggle_selected()
+            ));
+
+            self.share_button.connect_clicked(glib::clone!(
+                #[weak] win,
+                move |_| win.show_qr_for_selected()
             ));
 
             win.refresh_tunnels();
@@ -193,6 +200,7 @@ impl WrenWindow {
         imp.content_page.set_title(&tunnel.name);
         imp.content_stack.set_visible_child_name("detail");
         imp.split_view.set_show_content(true);
+        imp.share_button.set_visible(true);
 
         *imp.selected_name.borrow_mut() = Some(tunnel.name.clone());
         *imp.selected_path.borrow_mut() = Some(tunnel.config_path.clone());
@@ -208,9 +216,24 @@ impl WrenWindow {
         imp.content_page.set_title("Tunnel");
         imp.content_stack.set_visible_child_name("placeholder");
         imp.connect_button.set_visible(false);
+        imp.share_button.set_visible(false);
         imp.tunnel_detail.set_active_state("", false);
         imp.selected_name.borrow_mut().take();
         imp.selected_path.borrow_mut().take();
+    }
+
+    fn show_qr_for_selected(&self) {
+        let imp = self.imp();
+        let Some(path) = imp.selected_path.borrow().clone() else { return };
+        let Some(name) = imp.selected_name.borrow().clone() else { return };
+
+        match std::fs::read_to_string(&path) {
+            Ok(conf) => qr_dialog::show(self, &name, &conf),
+            Err(e) => {
+                tracing::error!("read {} for share: {e}", path.display());
+                self.toast(&format!("Could not read configuration: {e}"));
+            }
+        }
     }
 
     fn refresh_active_set(&self) {

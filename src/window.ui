@@ -114,6 +114,13 @@
               <object class="AdwToolbarView">
                 <child type="top">
                   <object class="AdwHeaderBar">
+                    <child type="start">
+                      <object class="GtkButton" id="share_button">
+                        <property name="visible">false</property>
+                        <property name="icon-name">qr-code-symbolic</property>
+                        <property name="tooltip-text" translatable="yes">Share via QR Code</property>
+                      </object>
+                    </child>
                     <child type="end">
                       <object class="GtkButton" id="connect_button">
                         <property name="visible">false</property>
