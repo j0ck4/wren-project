@@ -15,7 +15,7 @@
               <object class="GtkMenuButton">
                 <property name="icon-name">open-menu-symbolic</property>
                 <property name="primary">true</property>
-                <property name="tooltip-text" translatable="yes">Главное меню</property>
+                <property name="tooltip-text" translatable="yes">Main Menu</property>
               </object>
             </child>
           </object>
@@ -24,11 +24,11 @@
           <object class="AdwStatusPage">
             <property name="vexpand">true</property>
             <property name="icon-name">network-vpn-symbolic</property>
-            <property name="title" translatable="yes">Туннелей пока нет</property>
-            <property name="description" translatable="yes">Импортируйте конфигурацию WireGuard, чтобы начать.</property>
+            <property name="title" translatable="yes">No Tunnels Yet</property>
+            <property name="description" translatable="yes">Import a WireGuard configuration file to get started.</property>
             <property name="child">
               <object class="GtkButton">
-                <property name="label" translatable="yes">Импорт .conf</property>
+                <property name="label" translatable="yes">Import .conf</property>
                 <property name="halign">center</property>
                 <style>
                   <class name="suggested-action"/>
