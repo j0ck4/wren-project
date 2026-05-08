@@ -2,6 +2,7 @@
 
 Нативный GTK4 / libadwaita клиент WireGuard для Ubuntu.
 
+[![CI](https://github.com/j0ck4/wren-project/actions/workflows/ci.yml/badge.svg)](https://github.com/j0ck4/wren-project/actions/workflows/ci.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Rust](https://img.shields.io/badge/rust-stable-orange.svg)](https://www.rust-lang.org/)
 
