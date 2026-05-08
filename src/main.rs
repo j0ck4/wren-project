@@ -1,5 +1,6 @@
 mod application;
 mod config;
+mod detail;
 mod models;
 mod storage;
 mod wg;

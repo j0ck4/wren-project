@@ -1,9 +1,10 @@
 use std::cell::OnceCell;
 
-use adw::subclass::prelude::*;
-use gtk::{gio, glib, prelude::*};
+use adw::{prelude::*, subclass::prelude::*};
+use gtk::{gio, glib};
 
 use crate::{
+    detail::TunnelDetail,
     models::{Tunnel, TunnelObject},
     storage,
 };
@@ -15,15 +16,21 @@ mod imp {
     #[template(resource = "/io/github/j0ck4/Wren/window.ui")]
     pub struct WrenWindow {
         #[template_child]
-        pub split_view:         TemplateChild<adw::NavigationSplitView>,
+        pub split_view:          TemplateChild<adw::NavigationSplitView>,
         #[template_child]
-        pub sidebar_stack:      TemplateChild<gtk::Stack>,
+        pub sidebar_stack:       TemplateChild<gtk::Stack>,
         #[template_child]
-        pub tunnel_list:        TemplateChild<gtk::ListBox>,
+        pub tunnel_list:         TemplateChild<gtk::ListBox>,
         #[template_child]
-        pub import_button:      TemplateChild<gtk::Button>,
+        pub import_button:       TemplateChild<gtk::Button>,
         #[template_child]
         pub import_button_empty: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub content_page:        TemplateChild<adw::NavigationPage>,
+        #[template_child]
+        pub content_stack:       TemplateChild<gtk::Stack>,
+        #[template_child]
+        pub tunnel_detail:       TemplateChild<TunnelDetail>,
 
         pub tunnels: OnceCell<gio::ListStore>,
     }
@@ -35,6 +42,9 @@ mod imp {
         type ParentType = adw::ApplicationWindow;
 
         fn class_init(klass: &mut Self::Class) {
+            // Custom widget types must be registered before the
+            // template referring to them is parsed.
+            TunnelDetail::ensure_type();
             klass.bind_template();
         }
 
@@ -71,6 +81,11 @@ mod imp {
             self.import_button_empty.connect_clicked(glib::clone!(
                 #[weak] win,
                 move |_| win.open_import_dialog()
+            ));
+
+            self.tunnel_list.connect_row_activated(glib::clone!(
+                #[weak] win,
+                move |_, row| win.show_tunnel_at(row.index())
             ));
 
             win.refresh_tunnels();
@@ -120,7 +135,35 @@ impl WrenWindow {
             imp.sidebar_stack.set_visible_child_name("list");
         } else {
             imp.sidebar_stack.set_visible_child_name("empty");
+            self.show_placeholder();
         }
+    }
+
+    fn show_tunnel_at(&self, index: i32) {
+        let Ok(idx) = u32::try_from(index) else {
+            return;
+        };
+        let Some(item) = self.store().item(idx) else {
+            return;
+        };
+        let Some(tunnel_obj) = item.downcast_ref::<TunnelObject>() else {
+            return;
+        };
+        tunnel_obj.with(|t| self.show_tunnel_detail(t));
+    }
+
+    fn show_tunnel_detail(&self, tunnel: &Tunnel) {
+        let imp = self.imp();
+        imp.tunnel_detail.set_tunnel(tunnel);
+        imp.content_page.set_title(&tunnel.name);
+        imp.content_stack.set_visible_child_name("detail");
+        imp.split_view.set_show_content(true);
+    }
+
+    fn show_placeholder(&self) {
+        let imp = self.imp();
+        imp.content_page.set_title("Tunnel");
+        imp.content_stack.set_visible_child_name("placeholder");
     }
 
     fn open_import_dialog(&self) {
