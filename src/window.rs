@@ -10,6 +10,7 @@ use gtk::{gio, glib};
 use crate::{
     application::WrenApplication,
     detail::TunnelDetail,
+    edit_dialog::WrenEditDialog,
     models::{Tunnel, TunnelObject},
     qr_dialog, storage,
     tray::TunnelEntry,
@@ -52,6 +53,8 @@ mod imp {
         pub connect_button: TemplateChild<gtk::Button>,
         #[template_child]
         pub share_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub edit_button: TemplateChild<gtk::Button>,
         #[template_child]
         pub toast_overlay: TemplateChild<adw::ToastOverlay>,
 
@@ -127,6 +130,12 @@ mod imp {
                 #[weak]
                 win,
                 move |_| win.show_qr_for_selected()
+            ));
+
+            self.edit_button.connect_clicked(glib::clone!(
+                #[weak]
+                win,
+                move |_| win.show_editor_for_selected()
             ));
 
             win.refresh_tunnels();
@@ -212,6 +221,7 @@ impl WrenWindow {
         imp.content_stack.set_visible_child_name("detail");
         imp.split_view.set_show_content(true);
         imp.share_button.set_visible(true);
+        imp.edit_button.set_visible(true);
 
         *imp.selected_name.borrow_mut() = Some(tunnel.name.clone());
         *imp.selected_path.borrow_mut() = Some(tunnel.config_path.clone());
@@ -228,9 +238,51 @@ impl WrenWindow {
         imp.content_stack.set_visible_child_name("placeholder");
         imp.connect_button.set_visible(false);
         imp.share_button.set_visible(false);
+        imp.edit_button.set_visible(false);
         imp.tunnel_detail.set_active_state("", false);
         imp.selected_name.borrow_mut().take();
         imp.selected_path.borrow_mut().take();
+    }
+
+    fn show_editor_for_selected(&self) {
+        let imp = self.imp();
+        let Some(name) = imp.selected_name.borrow().clone() else { return };
+        let Some(path) = imp.selected_path.borrow().clone() else { return };
+
+        // Re-read the current tunnel from disk so the editor
+        // reflects whatever's authoritative right now.
+        let tunnel = match self.store_lookup(&name) {
+            Some(t) => t,
+            None => {
+                self.toast("Tunnel disappeared from the list");
+                return;
+            }
+        };
+
+        let dialog = WrenEditDialog::new(&path, &tunnel.config);
+        let win_weak = self.downgrade();
+        dialog.set_on_saved(move || {
+            let Some(win) = win_weak.upgrade() else { return };
+            win.toast("Tunnel updated");
+            win.refresh_tunnels();
+            // Re-show the just-edited tunnel so detail picks up changes.
+            if let Some(t) = win.store_lookup(&name) {
+                win.show_tunnel_detail(&t);
+            }
+        });
+        dialog.present(Some(self));
+    }
+
+    fn store_lookup(&self, target: &str) -> Option<Tunnel> {
+        let store = self.store();
+        for i in 0..store.n_items() {
+            let item = store.item(i)?;
+            let obj = item.downcast_ref::<TunnelObject>()?;
+            if obj.name() == target {
+                return Some(obj.with(Tunnel::clone));
+            }
+        }
+        None
     }
 
     fn show_qr_for_selected(&self) {

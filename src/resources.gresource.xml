@@ -3,5 +3,6 @@
   <gresource prefix="/io/github/j0ck4/Wren/">
     <file compressed="true" preprocess="xml-stripblanks">window.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">detail.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">edit_dialog.ui</file>
   </gresource>
 </gresources>

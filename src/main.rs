@@ -2,6 +2,7 @@ mod application;
 mod autostart;
 mod config;
 mod detail;
+mod edit_dialog;
 mod models;
 mod qr_dialog;
 mod storage;

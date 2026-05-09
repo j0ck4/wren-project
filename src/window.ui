@@ -121,6 +121,13 @@
                         <property name="tooltip-text" translatable="yes">Share via QR Code</property>
                       </object>
                     </child>
+                    <child type="start">
+                      <object class="GtkButton" id="edit_button">
+                        <property name="visible">false</property>
+                        <property name="icon-name">document-edit-symbolic</property>
+                        <property name="tooltip-text" translatable="yes">Edit Tunnel</property>
+                      </object>
+                    </child>
                     <child type="end">
                       <object class="GtkButton" id="connect_button">
                         <property name="visible">false</property>
