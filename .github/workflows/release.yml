@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  flatpak-bundle:
+    name: Build & publish Flatpak bundle
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: flathub-infra/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: wren-${{ github.ref_name }}.flatpak
+          manifest-path: build-aux/flatpak/io.github.j0ck4.Wren.Devel.json
+          cache-key: flatpak-builder-${{ github.sha }}
+          upload-artifact: true
+
+      - name: Attach bundle to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: wren-${{ github.ref_name }}.flatpak
+          generate_release_notes: true
+          fail_on_unmatched_files: true

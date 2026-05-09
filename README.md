@@ -10,6 +10,29 @@
 
 Раннее развитие. Спецификация — в [`wren-project.md`](./wren-project.md).
 
+## Установка готового bundle
+
+Для пользователей, которые хотят попробовать без сборки.
+
+```bash
+# 1. Установить Flathub (если ещё не сделано)
+flatpak remote-add --if-not-exists --user flathub \
+    https://dl.flathub.org/repo/flathub.flatpakrepo
+
+# 2. Скачать wren-vX.Y.Z.flatpak с GitHub Releases:
+#    https://github.com/j0ck4/wren-project/releases
+
+# 3. Установить
+flatpak install --user wren-vX.Y.Z.flatpak
+
+# 4. Запустить
+flatpak run io.github.j0ck4.Wren.Devel
+```
+
+Bundle самодостаточен и работает на любом дистрибутиве с Flatpak (Ubuntu,
+Fedora, Arch, openSUSE…). Зависимости (GNOME 50 runtime, ~600 МБ) подтянутся
+автоматически с Flathub при первой установке.
+
 ## Сборка из исходников
 
 ### Через Flatpak (рекомендуется)
