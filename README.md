@@ -12,9 +12,16 @@
 
 ## Документация
 
-- 📖 [USAGE.md](./USAGE.md) — User guide (English)
+Для **обычных пользователей** (скачал → установил → пользуется):
+- 📖 [USAGE.md](./USAGE.md) — End-user guide (English)
 - 📖 [USAGE.ru.md](./USAGE.ru.md) — Руководство пользователя (рус.)
-- 🛠 ниже — сборка из исходников
+
+Для **разработчиков и продвинутых юзеров** (native install,
+сборка из исходников, polkit, file layout):
+- 🛠 [DEVELOPING.md](./DEVELOPING.md) — Developer guide (English)
+- 🛠 [DEVELOPING.ru.md](./DEVELOPING.ru.md) — Гайд для разработчиков (рус.)
+
+Ниже — быстрая инструкция для сборки.
 
 ## Установка готового bundle
 
