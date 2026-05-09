@@ -1,9 +1,11 @@
-# Wren — Руководство пользователя
+# Wren — Руководство для разработчиков и продвинутых пользователей
 
-Wren — нативный GTK4 / libadwaita клиент для управления туннелями
-[WireGuard](https://www.wireguard.com/) на Linux.
+Полная версия документации Wren. В отличие от
+[`USAGE.ru.md`](./USAGE.ru.md), ориентированного на обычных
+пользователей, здесь есть native-установка, сборка из исходников,
+подробная карта файлов и политика polkit.
 
-🇬🇧 English version — [USAGE.md](./USAGE.md).
+🇬🇧 English version — [DEVELOPING.md](./DEVELOPING.md).
 
 ---
 

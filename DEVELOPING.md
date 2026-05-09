@@ -1,9 +1,11 @@
-# Wren — User Guide
+# Wren — Developer & Power-User Guide
 
-Wren is a native GTK4 / libadwaita client for managing
-[WireGuard](https://www.wireguard.com/) VPN tunnels on Linux.
+The full version of the Wren documentation. Compared to the
+end-user-focused [`USAGE.md`](./USAGE.md), this document also
+covers native installation, building from source, file layout
+in detail, and the polkit policy.
 
-🇷🇺 Русская версия — [USAGE.ru.md](./USAGE.ru.md).
+🇷🇺 Русская версия — [DEVELOPING.ru.md](./DEVELOPING.ru.md).
 
 ---
 
