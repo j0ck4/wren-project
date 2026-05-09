@@ -7,292 +7,171 @@ Wren is a native GTK4 / libadwaita client for managing
 
 ---
 
-## 1. Installation
+## Install
 
-### Option A — Flatpak bundle (recommended)
+### Step 1 — make sure WireGuard tools are on your system
 
-Works on any Linux with Flatpak: Ubuntu, Fedora, Arch, openSUSE, …
+Wren is a UI on top of `wg-quick`. The `wg-quick` binary must
+exist on the host:
 
-```bash
-# 1. Add the Flathub remote (skip if already added)
-flatpak remote-add --if-not-exists --user flathub \
-    https://dl.flathub.org/repo/flathub.flatpakrepo
+| Distro | Command |
+|--------|---------|
+| Ubuntu / Debian / Mint | `sudo apt install wireguard-tools` |
+| Fedora | `sudo dnf install wireguard-tools` |
+| Arch / Manjaro | `sudo pacman -S wireguard-tools` |
+| openSUSE | `sudo zypper install wireguard-tools` |
 
-# 2. Download the latest .flatpak from
-#    https://github.com/j0ck4/wren-project/releases
-#    (file name looks like `wren-v0.2.0-dev1.flatpak`)
+### Step 2 — install Wren itself
 
-# 3. Install
-flatpak install --user ~/Downloads/wren-v0.2.0-dev1.flatpak
+1. Open <https://github.com/j0ck4/wren-project/releases> and download
+   the latest `wren-vX.Y.Z.flatpak` file.
+2. **Double-click** the file. GNOME Software / KDE Discover /
+   Discover-equivalent opens, click **Install**.
+3. Find **Wren** in your applications menu and launch.
 
-# 4. Launch
-flatpak run io.github.j0ck4.Wren.Devel
-# …or find "Wren" in your apps menu
-```
+That's it. Wren will pull a one-time GNOME runtime download
+(~600 MB) on first install — subsequent Flatpak apps reuse it.
 
-The first install also pulls the GNOME 50 runtime (~600 MB, shared
-between all Flatpak apps).
-
-You also need **WireGuard tools** on the host (Wren shells out to
-`wg-quick`, which can't run inside the Flatpak sandbox):
-
-```bash
-# Debian / Ubuntu
-sudo apt install wireguard-tools
-
-# Fedora
-sudo dnf install wireguard-tools
-
-# Arch
-sudo pacman -S wireguard-tools
-```
-
-### Option B — Native install (Ubuntu 24.04+)
-
-```bash
-sudo apt install -y meson ninja-build pkg-config \
-    libgtk-4-dev libadwaita-1-dev libglib2.0-dev libdbus-1-dev \
-    wireguard-tools
-
-# Rust 1.85+ is required. If apt's rustc is too old, install rustup:
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-source "$HOME/.cargo/env"
-
-git clone https://github.com/j0ck4/wren-project.git
-cd wren-project
-meson setup builddir --prefix=/usr --buildtype=release
-meson compile -C builddir
-sudo meson install -C builddir --no-rebuild
-```
-
-After the install, find **Wren** in your applications menu.
-
-### Option C — Build from source as Flatpak
-
-For developers who want to iterate. See [README.md](./README.md).
+> If double-click does nothing, your distro doesn't ship a
+> sideload helper. Open a terminal and run:
+> ```
+> flatpak install --user ~/Downloads/wren-vX.Y.Z.flatpak
+> ```
 
 ---
 
-## 2. First launch
+## Using Wren
 
-When Wren starts for the first time you'll see an empty window with
-a single **Import .conf** button.
+### First launch
 
-A WireGuard configuration file looks like this (filename ends in
-`.conf`):
+Empty window with a single **Import .conf** button. A
+WireGuard configuration file (`.conf`) comes from your VPN
+provider or system administrator.
 
-```ini
-[Interface]
-PrivateKey = aGVsbG93b3JsZGhlbGxvd29ybGRoZWxsb3dvcmxkaGVsbA=
-Address = 10.0.0.2/32
-DNS = 1.1.1.1
+### Import a tunnel
 
-[Peer]
-PublicKey = cHViMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
-AllowedIPs = 0.0.0.0/0
-Endpoint = vpn.example.com:51820
-PersistentKeepalive = 25
-```
+Click **Import .conf**, pick a file. The tunnel appears in the
+sidebar. Wren copies the file into its own storage (`0600` perms
+so the private key stays private) and auto-renames if the name
+exceeds WireGuard's 15-character interface name limit.
 
-Your VPN provider (or sysadmin) gives you this file.
+### Connect / disconnect
 
----
+1. Click a tunnel in the sidebar.
+2. Click the blue **Connect** button.
+3. Enter your account password when polkit asks.
+4. Button turns red **Disconnect**, a toast confirms it, and a
+   desktop notification fires.
 
-## 3. Importing a tunnel
+### Detail page
 
-1. Click **Import .conf** (either the big button on the empty page
-   or the folder icon in the sidebar header).
-2. Pick your `.conf` file.
-3. The tunnel appears in the sidebar.
+Selecting a tunnel shows:
 
-Wren stores tunnels under
-`~/.config/wren/tunnels/<name>.conf` (Flatpak: under
-`~/.var/app/io.github.j0ck4.Wren.Devel/config/wren/tunnels/`),
-with permissions `0600` so the private key isn't world-readable.
-
-WireGuard interface names are limited to **15 characters**. If your
-file's basename is longer (e.g. `home-laptop-vpn.conf` ⇒ 16 chars),
-Wren automatically renames it to fit
-(`home-laptop-vpn.conf` → `home-laptop-vpn`).
-
----
-
-## 4. Connecting / disconnecting
-
-1. Click a tunnel in the sidebar — its details appear on the right.
-2. Click the blue **Connect** button in the top-right.
-3. PolicyKit prompts for your password (only the first time per
-   admin session — see *Polkit policy* below).
-4. The button turns red and reads **Disconnect**. A toast confirms
-   *<name> connected* and a desktop notification pops up.
-
-Click **Disconnect** to bring the tunnel down.
-
-If anything fails, you'll see the underlying `wg-quick` error in a
-toast and in a desktop notification.
-
----
-
-## 5. Tunnel detail page
-
-When a tunnel is selected, the right pane shows:
-
-- **Transfer** *(only while active)* — Received / Sent counters in
-  KiB / MiB / GiB, refreshed every 2 seconds.
+- **Transfer** — Received / Sent counters in KiB / MiB / GiB,
+  refreshed every 2 s. Only visible when the tunnel is active.
 - **Interface** — Address, DNS, Listen Port, MTU.
-- **Peers** — one collapsible row per peer. Click to expand and see
-  the public key, allowed IPs, endpoint, and keepalive.
+- **Peers** — collapsible row per peer with public key, allowed
+  IPs, endpoint, and keepalive. Right-click ▸ Copy works on any
+  value.
 
-Subtitles are selectable, so you can copy any value with
-right-click → Copy or Ctrl+C.
+### Edit a tunnel
 
----
+Click the **pencil** icon in the header. A dialog opens with
+editable Interface fields and a list of peers; trash removes a
+peer, **+** in the Peers header adds a new one. **Save** writes
+back to disk; **Cancel** discards.
 
-## 6. Editing a tunnel
+### Share via QR
 
-Click the **pencil icon** in the detail header.
+Click the **QR** icon. A dialog shows the tunnel as a QR code —
+scan it with the WireGuard mobile app
+(*Add tunnel ▸ Create from QR code*). Or click
+**Copy Configuration** to put the conf on your clipboard.
 
-A modal dialog opens with editable fields:
+### System tray
 
-- **Interface** group: Private Key, Address, DNS, Listen Port, MTU.
-- **Peers** group: one expander per peer with all fields editable.
-  Use the **trash icon** on a peer to remove it; use the **+** in
-  the Peers header to add a new peer.
+Wren registers a tray icon when the desktop supports it
+(KDE / XFCE / Cinnamon / MATE — out of the box; GNOME — install
+[the AppIndicator extension](https://extensions.gnome.org/extension/615/appindicator-support/)).
 
-Click **Save** to write the changes back to disk and refresh the
-detail page; **Cancel** discards them.
+Right-click the icon for **Show Wren**, a quick toggle list of
+tunnels, and **Quit**.
 
-The Save button validates that PrivateKey and every peer's
-PublicKey are non-empty.
+### Autostart at login
 
----
+**☰ menu** in the sidebar header → **Start at Login**. Toggle
+off to remove.
 
-## 7. Sharing a tunnel via QR code
+### Quitting with active tunnels
 
-To import the tunnel onto a phone:
-
-1. Click the **QR icon** (next to the pencil) in the detail header.
-2. Scan the QR with the WireGuard mobile app (Android or iOS):
-   *Add tunnel ▸ Create from QR code*.
-3. Or click **Copy Configuration** and paste it into the mobile
-   app's *Create from clipboard* flow.
-
----
-
-## 8. System tray
-
-When you launch Wren, it tries to register a tray icon
-(StatusNotifierItem):
-
-- **KDE / XFCE / Cinnamon / MATE** — the icon shows up automatically.
-- **GNOME** — install the [AppIndicator and KStatusNotifierItem
-  Support extension](https://extensions.gnome.org/extension/615/appindicator-support/),
-  log out, log back in.
-
-Right-click the icon for a menu of:
-
-- **Show Wren** — bring the main window forward.
-- A list of all tunnels — clicking toggles connect/disconnect on
-  the host.
-- **Quit** — close the application.
-
-If your desktop has no tray, the app keeps working; only the icon
-is missing.
-
----
-
-## 9. Start at Login
-
-Click the **☰ menu** in the sidebar header → **Start at Login**.
-
-This drops a `.desktop` file into `~/.config/autostart/`, so Wren
-launches automatically when you log in. Toggle it off to remove
-the entry.
-
----
-
-## 10. Quitting with active tunnels
-
-If you close the window while one or more tunnels are connected, a
-dialog asks:
+If you close the window with tunnels still up, a dialog asks:
 
 - **Cancel** — keep the window open.
-- **Disconnect & Quit** — bring every active tunnel down, then
-  close. (May prompt for the password once.)
-- **Quit Anyway** — close the window; tunnels keep running on the
-  host (you can take them down later from a terminal with
-  `sudo wg-quick down <name>`).
+- **Disconnect & Quit** — bring everything down, then close.
+- **Quit Anyway** — close the window; tunnels stay running.
+
+### Authentication frequency
+
+The first connect of an admin session asks for a password; the
+polkit policy (`auth_admin_keep`) caches that authentication for
+~5 minutes, so subsequent connect/disconnect actions inside that
+window don't ask again.
+
+> Caveat: inside the Flatpak sandbox the policy file isn't
+> installed system-wide, so the prompt may appear every time.
+> The native (`apt`) install closes that gap, and is on the
+> roadmap for Ubuntu 26.04+.
 
 ---
 
-## 11. Polkit policy
-
-Wren needs root only to talk to `wg-quick`. The policy file
-installed at `/usr/share/polkit-1/actions/io.github.j0ck4.Wren.policy`
-sets `auth_admin_keep`, meaning:
-
-> Once you authenticate, subsequent connect/disconnect actions
-> within ~5 minutes don't ask again.
-
-Inside Flatpak the policy file isn't installed system-wide, so the
-prompt appears every time. Use the native install (Option B above)
-or wait for `.deb` packaging on Ubuntu 26.04+ for a smoother flow.
-
----
-
-## 12. Troubleshooting
+## Troubleshooting
 
 **`wg-quick: command not found` when connecting**
-You haven't installed `wireguard-tools` on the host. See *Option A*
-of the install section.
+You skipped Step 1 of Install — `sudo apt install wireguard-tools`.
 
 **`config file must be a valid interface name, followed by .conf`**
-The filename has invalid characters or is over 15 chars. Wren
-should rename automatically on next start; if it didn't, rename
-the file under `~/.config/wren/tunnels/` to a-z / 0-9 / `.-_`,
-≤ 15 chars.
+The filename has weird characters or is over 15 characters. Wren
+should rename it automatically; if not, rename it manually under
+`~/.config/wren/tunnels/`.
 
-**Tray icon missing on GNOME**
-Install the AppIndicator extension (see *§8*). Wren itself prints
-*Tray service unavailable* in the log and continues working.
-
-**`pkexec` keeps asking for the password**
-You're running the Flatpak version. The polkit policy can't be
-installed inside the sandbox; switch to a native install for
-session-wide caching.
+**No tray icon on GNOME**
+Install the AppIndicator extension (link above), log out, log
+back in.
 
 **`Could not refresh tunnel status`**
-Wren reads `/sys/class/net` to see which tunnels are up. The host
-must have `ip` (in `iproute2`) installed; this is true on every
-mainstream distro.
+Your distro doesn't ship `iproute2` (extremely rare). Install it.
 
 **Tunnel up but no internet**
-That's a WireGuard config issue, not Wren. Verify the server is
-reachable, the public/private key pair matches, and your
-`AllowedIPs` make sense. `sudo wg show` gives the kernel-level
-view.
+That's a WireGuard *config* issue, not Wren. Check that your
+server is reachable, your keys match the server, and `AllowedIPs`
+is sane. `sudo wg show` gives the kernel-level view.
+
+**The password prompt comes up every single click**
+You're on the Flatpak version; that's expected (see *Authentication
+frequency* above).
 
 ---
 
-## 13. File locations
+## File locations
 
-| What | Path (host install) | Path (Flatpak) |
-|------|---------------------|----------------|
-| Tunnel configs | `~/.config/wren/tunnels/` | `~/.var/app/io.github.j0ck4.Wren.Devel/config/wren/tunnels/` |
-| Autostart entry | `~/.config/autostart/io.github.j0ck4.Wren.desktop` | same (granted by `xdg-config/autostart` permission) |
-| Binary | `/usr/bin/wren` | inside the bundle |
-| Polkit policy | `/usr/share/polkit-1/actions/io.github.j0ck4.Wren.policy` | not installed |
+Tunnel configurations live in:
+
+- Flatpak: `~/.var/app/io.github.j0ck4.Wren.Devel/config/wren/tunnels/`
+
+You can copy a `.conf` directly there if you prefer the file
+manager over the import dialog.
 
 ---
 
-## 14. Reporting bugs
+## Reporting bugs
 
-GitHub issues: <https://github.com/j0ck4/wren-project/issues>.
+Open an issue at <https://github.com/j0ck4/wren-project/issues>.
 
-Useful info to include:
+Helpful info to include:
 
-- The exact `.conf` (with the private key redacted!)
-- Output of `journalctl --user -e | grep wren` or terminal logs
-  from `RUST_LOG=wren=debug flatpak run io.github.j0ck4.Wren.Devel`
-- `wg-quick --version`, `pkexec --version`, your distro and
-  desktop environment
+- Your distro + desktop environment (`uname -a`,
+  `echo $XDG_CURRENT_DESKTOP`)
+- The `.conf` you tried to import — **redact the PrivateKey**
+- Logs: run from a terminal with
+  `RUST_LOG=wren=debug flatpak run io.github.j0ck4.Wren.Devel`
+  and paste anything that looks relevant
