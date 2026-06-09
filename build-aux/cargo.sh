@@ -16,7 +16,10 @@ OUTPUT="$4"
 shift 4
 
 export CARGO_TARGET_DIR
-export CARGO_HOME="$CARGO_TARGET_DIR/cargo-home"
+# Honour a CARGO_HOME provided by the environment (the Flatpak/Flathub
+# build sets it to the vendored offline registry); otherwise default to
+# a directory under the target dir.
+export CARGO_HOME="${CARGO_HOME:-$CARGO_TARGET_DIR/cargo-home}"
 
 if [ "$RUST_PROFILE" = "release" ]; then
     cargo build --release "$@"
