@@ -5,7 +5,7 @@
 
 <policyconfig>
   <vendor>Wren</vendor>
-  <vendor_url>https://github.com/j0ck4/wren-project</vendor_url>
+  <vendor_url>https://github.com/j0ck4/wren</vendor_url>
   <icon_name>network-vpn</icon_name>
 
   <action id="io.github.j0ck4.Wren.manage-tunnels">

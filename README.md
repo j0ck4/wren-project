@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/j0ck4/wren-project/actions/workflows/ci.yml"><img src="https://github.com/j0ck4/wren-project/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/j0ck4/wren/actions/workflows/ci.yml"><img src="https://github.com/j0ck4/wren/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3"></a>
   <a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/rust-stable-orange.svg" alt="Rust"></a>
 </p>
@@ -82,7 +82,7 @@ flatpak remote-add --if-not-exists --user flathub \
     https://dl.flathub.org/repo/flathub.flatpakrepo
 
 # 2. Download wren-vX.Y.Z.flatpak from GitHub Releases:
-#    https://github.com/j0ck4/wren-project/releases
+#    https://github.com/j0ck4/wren/releases
 
 # 3. Install
 flatpak install --user wren-vX.Y.Z.flatpak

@@ -15,9 +15,9 @@ Build-Depends:
  libssl-dev
 Standards-Version: 4.6.2
 Rules-Requires-Root: no
-Homepage: https://github.com/j0ck4/wren-project
-Vcs-Git: https://github.com/j0ck4/wren-project.git
-Vcs-Browser: https://github.com/j0ck4/wren-project
+Homepage: https://github.com/j0ck4/wren
+Vcs-Git: https://github.com/j0ck4/wren.git
+Vcs-Browser: https://github.com/j0ck4/wren
 
 Package: wren
 Architecture: any

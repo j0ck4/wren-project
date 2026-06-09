@@ -23,7 +23,7 @@ Wren — это GUI поверх `wg-quick`. Сам `wg-quick` должен бы
 
 ### Шаг 2 — установите Wren
 
-1. Откройте <https://github.com/j0ck4/wren-project/releases> и
+1. Откройте <https://github.com/j0ck4/wren/releases> и
    скачайте последний файл `wren-vX.Y.Z.flatpak`.
 2. **Дважды кликните** по файлу. Откроется GNOME Software /
    KDE Discover / аналог — нажмите **Установить**.
@@ -173,7 +173,7 @@ Polkit-policy (`auth_admin_keep`) кэширует аутентификацию 
 
 ## Сообщить о баге
 
-Откройте issue: <https://github.com/j0ck4/wren-project/issues>.
+Откройте issue: <https://github.com/j0ck4/wren/issues>.
 
 К багу полезно приложить:
 

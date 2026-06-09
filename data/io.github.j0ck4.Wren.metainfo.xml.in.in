@@ -23,9 +23,9 @@
 
   <launchable type="desktop-id">@app-id@.desktop</launchable>
 
-  <url type="homepage">https://github.com/j0ck4/wren-project</url>
-  <url type="bugtracker">https://github.com/j0ck4/wren-project/issues</url>
-  <url type="vcs-browser">https://github.com/j0ck4/wren-project</url>
+  <url type="homepage">https://github.com/j0ck4/wren</url>
+  <url type="bugtracker">https://github.com/j0ck4/wren/issues</url>
+  <url type="vcs-browser">https://github.com/j0ck4/wren</url>
 
   <developer id="io.github.j0ck4">
     <name>j0ck4</name>
@@ -35,7 +35,7 @@
 
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/j0ck4/wren-project/v0.2.1/data/screenshots/wren.png</image>
+      <image>https://raw.githubusercontent.com/j0ck4/wren/v0.2.2/data/screenshots/wren.png</image>
       <caption>Viewing a tunnel's details in Wren</caption>
     </screenshot>
   </screenshots>
@@ -46,6 +46,11 @@
   </branding>
 
   <releases>
+    <release version="0.2.2" date="2026-06-09">
+      <description>
+        <p>Packaging release toward Flathub: tightened sandbox permissions and project rename to "wren". No functional changes.</p>
+      </description>
+    </release>
     <release version="0.2.1" date="2026-06-09">
       <description>
         <p>Packaging release: reproducible offline (Flathub) builds and a screenshot in the app metadata. No functional changes since 0.2.0.</p>

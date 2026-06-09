@@ -134,8 +134,8 @@ impl WrenApplication {
             .application_icon(config::APP_ID)
             .version(config::VERSION)
             .developer_name("j0ck4")
-            .website("https://github.com/j0ck4/wren-project")
-            .issue_url("https://github.com/j0ck4/wren-project/issues")
+            .website("https://github.com/j0ck4/wren")
+            .issue_url("https://github.com/j0ck4/wren/issues")
             .copyright("© 2026 j0ck4")
             .license_type(gtk::License::Gpl30)
             .build();

@@ -1,7 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: wren
 Upstream-Contact: j0ck4 <j0ck4@users.noreply.github.com>
-Source: https://github.com/j0ck4/wren-project
+Source: https://github.com/j0ck4/wren
 
 Files: *
 Copyright: 2026 j0ck4 <j0ck4@users.noreply.github.com>

@@ -23,7 +23,7 @@ exist on the host:
 
 ### Step 2 — install Wren itself
 
-1. Open <https://github.com/j0ck4/wren-project/releases> and download
+1. Open <https://github.com/j0ck4/wren/releases> and download
    the latest `wren-vX.Y.Z.flatpak` file.
 2. **Double-click** the file. GNOME Software / KDE Discover /
    Discover-equivalent opens, click **Install**.
@@ -171,7 +171,7 @@ manager over the import dialog.
 
 ## Reporting bugs
 
-Open an issue at <https://github.com/j0ck4/wren-project/issues>.
+Open an issue at <https://github.com/j0ck4/wren/issues>.
 
 Helpful info to include:
 

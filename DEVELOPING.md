@@ -21,7 +21,7 @@ flatpak remote-add --if-not-exists --user flathub \
     https://dl.flathub.org/repo/flathub.flatpakrepo
 
 # 2. Download the latest .flatpak from
-#    https://github.com/j0ck4/wren-project/releases
+#    https://github.com/j0ck4/wren/releases
 #    (file name looks like `wren-v0.2.0-dev1.flatpak`)
 
 # 3. Install
@@ -60,8 +60,8 @@ sudo apt install -y meson ninja-build pkg-config \
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 source "$HOME/.cargo/env"
 
-git clone https://github.com/j0ck4/wren-project.git
-cd wren-project
+git clone https://github.com/j0ck4/wren.git
+cd wren
 meson setup builddir --prefix=/usr --buildtype=release
 meson compile -C builddir
 sudo meson install -C builddir --no-rebuild
@@ -90,7 +90,7 @@ flatpak uninstall --unused          # drop the now-orphaned runtime
 it from the same build directory:
 
 ```bash
-cd wren-project
+cd wren
 sudo ninja -C builddir uninstall
 ```
 
@@ -330,7 +330,7 @@ view.
 
 ## 14. Reporting bugs
 
-GitHub issues: <https://github.com/j0ck4/wren-project/issues>.
+GitHub issues: <https://github.com/j0ck4/wren/issues>.
 
 Useful info to include:
 
