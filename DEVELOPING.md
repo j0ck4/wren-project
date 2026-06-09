@@ -73,6 +73,39 @@ After the install, find **Wren** in your applications menu.
 
 For developers who want to iterate. See [README.md](./README.md).
 
+### Uninstalling
+
+Wren can be installed two ways, so remove it the way you installed
+it. The two are independent — if you tried both, you'll have two
+**Wren** entries in your apps menu and should run both removals.
+
+**Flatpak** (Option A or C):
+
+```bash
+flatpak uninstall --user io.github.j0ck4.Wren.Devel
+flatpak uninstall --unused          # drop the now-orphaned runtime
+```
+
+**Native** (Option B) — Meson records what it installed and can undo
+it from the same build directory:
+
+```bash
+cd wren-project
+sudo ninja -C builddir uninstall
+```
+
+This removes exactly the files Meson placed under `/usr`
+(`/usr/bin/wren`, the `.desktop`, metainfo, gresource, icons, and
+the polkit policy).
+
+Both commands leave your tunnels and settings untouched. To wipe
+those too — note they hold private keys — delete the config dir:
+
+```bash
+rm -rf ~/.config/wren                                  # native
+rm -rf ~/.var/app/io.github.j0ck4.Wren.Devel           # Flatpak
+```
+
 ---
 
 ## 2. First launch
@@ -150,7 +183,7 @@ right-click → Copy or Ctrl+C.
 
 ---
 
-## 6. Editing a tunnel
+## 6. Editing & deleting a tunnel
 
 Click the **pencil icon** in the detail header.
 
@@ -166,6 +199,14 @@ detail page; **Cancel** discards them.
 
 The Save button validates that PrivateKey and every peer's
 PublicKey are non-empty.
+
+To **delete** a tunnel, click the red **trash icon** in the detail
+header. A confirmation dialog appears. If the tunnel is currently
+active, Wren brings it down (`wg-quick down` via pkexec) before
+removing the `.conf`; if that disconnect fails, the file is kept and
+an error toast is shown. Deletion only removes Wren's stored copy
+under the tunnels directory — it never touches the kernel interface
+beyond that one disconnect.
 
 ---
 

@@ -1,117 +1,119 @@
-# Wren — WireGuard GUI для Ubuntu
+# Wren — WireGuard GUI for Ubuntu
 
-> Нативный GTK4 / libadwaita клиент для управления WireGuard туннелями.  
-> Язык: Rust | Платформы: Ubuntu 24.04 LTS, 26.04 LTS
+> A native GTK4 / libadwaita client for managing WireGuard tunnels.  
+> Language: Rust | Platforms: Ubuntu 24.04 LTS, 26.04 LTS
 
----
-
-## Контекст
-
-На данный момент не существует нативного GTK4/libadwaita клиента WireGuard для Linux. Ближайший аналог — **Wrenrd** (Go + GTK3, ~960 ⭐), последнее обновление январь 2024, не поддерживает Ubuntu 24.04+. Остальные проекты либо заброшены, либо используют веб-обёртки (Tauri + Electron).
-
-Данный проект занимает пустую нишу и следует современному стеку GNOME.
+🇷🇺 Русская версия — [wren-project.ru.md](./wren-project.ru.md).
 
 ---
 
-## Цели проекта
+## Context
 
-- Предоставить нативный, визуально современный WireGuard клиент для Ubuntu
-- Поддерживать Ubuntu 24.04 LTS и 26.04 LTS из коробки
-- Распространяться как `.deb` пакет и Flatpak
-- Не требовать постоянного ввода пароля (polkit / pkexec)
+At the moment there is no native GTK4/libadwaita WireGuard client for Linux. The closest analogue is **Wrenrd** (Go + GTK3, ~960 ⭐), last updated January 2024, with no support for Ubuntu 24.04+. The remaining projects are either abandoned or use web wrappers (Tauri + Electron).
+
+This project fills an empty niche and follows the modern GNOME stack.
 
 ---
 
-## Стек технологий
+## Project goals
 
-| Компонент       | Выбор                        | Обоснование                              |
+- Provide a native, visually modern WireGuard client for Ubuntu
+- Support Ubuntu 24.04 LTS and 26.04 LTS out of the box
+- Distribute as both a `.deb` package and a Flatpak
+- Avoid constant password prompts (polkit / pkexec)
+
+---
+
+## Technology stack
+
+| Component       | Choice                       | Rationale                                |
 |-----------------|------------------------------|------------------------------------------|
-| Язык            | Rust                         | Безопасность, производительность, Ubuntu 26.04 |
-| UI фреймворк    | gtk4-rs + libadwaita         | Нативный GNOME стек                      |
-| Async runtime   | tokio                        | Фоновые задачи, опрос статистики         |
-| Системный трей  | ksni                         | StatusNotifierItem (современный стандарт)|
-| Сборка UI       | Blueprint (опционально)      | Декларативный XML для GTK4               |
-| Привилегии      | polkit / pkexec              | Стандарт Ubuntu для прав администратора  |
-| Хранение данных | glib::user_config_dir        | `~/.config/wren/`                      |
-| Парсинг .conf   | ini crate + serde            | Формат WireGuard INI-подобный            |
+| Language        | Rust                         | Safety, performance, Ubuntu 26.04        |
+| UI framework    | gtk4-rs + libadwaita         | Native GNOME stack                       |
+| Async runtime   | tokio                        | Background tasks, stats polling          |
+| System tray     | ksni                         | StatusNotifierItem (the modern standard) |
+| UI construction | Blueprint (optional)         | Declarative XML for GTK4                 |
+| Privileges      | polkit / pkexec              | Ubuntu standard for admin rights         |
+| Data storage    | glib::user_config_dir        | `~/.config/wren/`                      |
+| `.conf` parsing | ini crate + serde            | WireGuard's INI-like format              |
 
 ---
 
-## Функциональные требования
+## Functional requirements
 
 ### MVP (v0.1)
 
-- [ ] Импорт `.conf` файла через диалог открытия файла
-- [ ] Список туннелей в боковой панели (sidebar)
-- [ ] Подключение / отключение туннеля одной кнопкой
-- [ ] Статус туннеля (подключён / отключён / ошибка)
-- [ ] Системный трей с индикатором состояния и меню
+- [ ] Import a `.conf` file via a file-open dialog
+- [ ] List of tunnels in the sidebar
+- [ ] Connect / disconnect a tunnel with one button
+- [ ] Tunnel status (connected / disconnected / error)
+- [ ] System tray with a status indicator and menu
 
 ### v0.2
 
-- [ ] Просмотр деталей туннеля (IP, DNS, peers, allowed IPs)
-- [ ] Статистика трафика (RX / TX) с обновлением раз в 2 сек
-- [ ] Уведомления GNOME при подключении / отключении
-- [ ] Автозапуск при входе в систему
+- [ ] View tunnel details (IP, DNS, peers, allowed IPs)
+- [ ] Traffic statistics (RX / TX) refreshed every 2 s
+- [ ] GNOME notifications on connect / disconnect
+- [ ] Autostart at login
 
 ### v0.3
 
-- [ ] Управление несколькими пирами (peer list)
-- [ ] Редактирование конфигурации туннеля в UI
-- [ ] Экспорт конфига / QR-код для мобильных устройств
-- [ ] Flatpak пакет
+- [ ] Manage multiple peers (peer list)
+- [ ] Edit tunnel configuration in the UI
+- [ ] Export config / QR code for mobile devices
+- [ ] Flatpak package
 
 ---
 
-## Нефункциональные требования
+## Non-functional requirements
 
-- Время запуска приложения: < 300 мс
-- Потребление памяти в фоне (трей): < 20 МБ
-- Нет зависимостей от libssl, Node.js, Python в runtime
-- Поддержка Wayland и X11
-- Соответствие GNOME HIG (Human Interface Guidelines)
+- Application startup time: < 300 ms
+- Background (tray) memory usage: < 20 MB
+- No runtime dependency on libssl, Node.js, or Python
+- Wayland and X11 support
+- Compliance with the GNOME HIG (Human Interface Guidelines)
 
 ---
 
-## Архитектура проекта
+## Project architecture
 
 ```
 wren/
 ├── src/
-│   ├── main.rs                 # Точка входа, GTK Application
-│   ├── app.rs                  # ApplicationWindow, глобальное состояние
+│   ├── main.rs                 # Entry point, GTK Application
+│   ├── app.rs                  # ApplicationWindow, global state
 │   ├── ui/
-│   │   ├── window.rs           # Главное окно (AdwApplicationWindow)
-│   │   ├── tunnel_list.rs      # Боковая панель со списком туннелей
-│   │   ├── tunnel_detail.rs    # Детали выбранного туннеля + статистика
-│   │   ├── import_dialog.rs    # Диалог импорта .conf файла
-│   │   └── tray.rs             # Системный трей (ksni)
+│   │   ├── window.rs           # Main window (AdwApplicationWindow)
+│   │   ├── tunnel_list.rs      # Sidebar with the tunnel list
+│   │   ├── tunnel_detail.rs    # Selected tunnel details + statistics
+│   │   ├── import_dialog.rs    # .conf import dialog
+│   │   └── tray.rs             # System tray (ksni)
 │   ├── wg/
-│   │   ├── manager.rs          # wg-quick up/down через pkexec
-│   │   ├── parser.rs           # Парсинг .conf файлов
-│   │   ├── stats.rs            # Чтение статистики (wg show transfer)
-│   │   └── monitor.rs          # Фоновый опрос статуса туннелей
+│   │   ├── manager.rs          # wg-quick up/down via pkexec
+│   │   ├── parser.rs           # .conf file parsing
+│   │   ├── stats.rs            # Reading statistics (wg show transfer)
+│   │   └── monitor.rs          # Background polling of tunnel status
 │   └── models/
-│       ├── tunnel.rs           # Структуры Tunnel, Peer, TunnelStatus
-│       └── config.rs           # Сохранение/загрузка настроек приложения
+│       ├── tunnel.rs           # Tunnel, Peer, TunnelStatus structs
+│       └── config.rs           # Save/load application settings
 ├── data/
-│   ├── io.github.wren.desktop        # .desktop файл
-│   ├── io.github.wren.metainfo.xml   # AppStream метаданные
-│   ├── io.github.wren.gschema.xml    # GSettings схема
+│   ├── io.github.wren.desktop        # .desktop file
+│   ├── io.github.wren.metainfo.xml   # AppStream metadata
+│   ├── io.github.wren.gschema.xml    # GSettings schema
 │   └── icons/
 │       ├── hicolor/scalable/apps/wren.svg
 │       └── hicolor/symbolic/apps/wren-symbolic.svg
 ├── polkit/
-│   └── io.github.wren.policy         # Polkit политика для wg-quick
+│   └── io.github.wren.policy         # Polkit policy for wg-quick
 ├── packaging/
-│   ├── debian/                          # Пакет .deb
-│   └── io.github.wren.yml            # Flatpak манифест
+│   ├── debian/                          # .deb package
+│   └── io.github.wren.yml            # Flatpak manifest
 └── Cargo.toml
 ```
 
 ---
 
-## Ключевые зависимости (Cargo.toml)
+## Key dependencies (Cargo.toml)
 
 ```toml
 [dependencies]
@@ -129,24 +131,24 @@ glib         = "0.20"
 
 ---
 
-## Взаимодействие с WireGuard
+## Interaction with WireGuard
 
-Приложение управляет туннелями через системные инструменты, не напрямую через ядро:
+The application manages tunnels through system tools, not directly through the kernel:
 
 ```
-UI Action          →  pkexec wg-quick up   <interface>   # поднять туннель
-UI Action          →  pkexec wg-quick down <interface>   # опустить туннель
-Background thread  →  wg show <interface> transfer       # статистика RX/TX
-Background thread  →  wg show interfaces                 # список активных
+UI Action          →  pkexec wg-quick up   <interface>   # bring the tunnel up
+UI Action          →  pkexec wg-quick down <interface>   # bring the tunnel down
+Background thread  →  wg show <interface> transfer       # RX/TX statistics
+Background thread  →  wg show interfaces                 # list of active ones
 ```
 
-Конфигурационные файлы при импорте копируются в `/etc/wireguard/` через pkexec.
+On import, configuration files are copied into `/etc/wireguard/` via pkexec.
 
 ---
 
-## Polkit политика
+## Polkit policy
 
-Файл `/usr/share/polkit-1/actions/io.github.wren.policy` разрешает запуск `wg-quick` без постоянного запроса пароля для пользователей группы `sudo`:
+The file `/usr/share/polkit-1/actions/io.github.wren.policy` allows running `wg-quick` without a constant password prompt for users in the `sudo` group:
 
 ```xml
 <action id="io.github.wren.manage-tunnels">
@@ -160,38 +162,38 @@ Background thread  →  wg show interfaces                 # список акт
 
 ---
 
-## Дорожная карта
+## Roadmap
 
-| Этап  | Версия | Срок      | Содержание                                      |
-|-------|--------|-----------|-------------------------------------------------|
-| 1     | v0.1   | 4 недели  | MVP: импорт, список, connect/disconnect, трей   |
-| 2     | v0.2   | +3 недели | Статистика, уведомления, автозапуск             |
-| 3     | v0.3   | +4 недели | Редактор конфига, multi-peer, Flatpak           |
-| 4     | v1.0   | +2 недели | Полировка UI, тесты, публикация на GitHub       |
+| Stage | Version | Timeline   | Contents                                        |
+|-------|---------|------------|-------------------------------------------------|
+| 1     | v0.1    | 4 weeks    | MVP: import, list, connect/disconnect, tray     |
+| 2     | v0.2    | +3 weeks   | Statistics, notifications, autostart            |
+| 3     | v0.3    | +4 weeks   | Config editor, multi-peer, Flatpak              |
+| 4     | v1.0    | +2 weeks   | UI polish, tests, GitHub publication            |
 
 ---
 
-## Конкурентный анализ
+## Competitive analysis
 
-| Проект            | Язык     | UI        | Ubuntu 24.04 | Активен | Статистика |
+| Project           | Language | UI        | Ubuntu 24.04 | Active  | Statistics |
 |-------------------|----------|-----------|:------------:|:-------:|:----------:|
-| Wrenrd         | Go       | GTK3      | ⚠️ нет      | ❌      | ❌         |
+| Wrenrd         | Go       | GTK3      | ⚠️ no       | ❌      | ❌         |
 | wireguard-gui     | JS+Tauri | WebView   | ✅           | ⚠️      | ❌         |
 | Wren           | ?        | ?         | ❌           | ❌      | ❌         |
-| **wren (наш)**  | **Rust** | **GTK4**  | **✅**       | **✅**  | **✅**     |
+| **wren (ours)** | **Rust** | **GTK4**  | **✅**       | **✅**  | **✅**     |
 
 ---
 
-## Системные зависимости (runtime)
+## System dependencies (runtime)
 
 ```
 wireguard-tools   # wg, wg-quick
-resolvconf        # управление DNS
-polkit            # запрос привилегий
+resolvconf        # DNS management
+polkit            # privilege prompts
 libgtk-4-1        # GTK4
-libadwaita-1-0    # Adwaita виджеты
+libadwaita-1-0    # Adwaita widgets
 ```
 
 ---
 
-*Документ создан: май 2026*
+*Document created: May 2026*

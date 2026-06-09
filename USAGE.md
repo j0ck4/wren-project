@@ -81,6 +81,12 @@ editable Interface fields and a list of peers; trash removes a
 peer, **+** in the Peers header adds a new one. **Save** writes
 back to disk; **Cancel** discards.
 
+### Delete a tunnel
+
+Click the red **trash** icon in the header. A confirmation dialog
+appears; if the tunnel is currently connected it is brought down
+first, then its `.conf` is permanently removed from Wren's storage.
+
 ### Share via QR
 
 Click the **QR** icon. A dialog shows the tunnel as a QR code —
