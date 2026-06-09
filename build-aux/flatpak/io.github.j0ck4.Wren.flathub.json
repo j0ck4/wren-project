@@ -10,7 +10,6 @@
     "command": "wren",
     "finish-args": [
         "--share=ipc",
-        "--share=network",
         "--socket=fallback-x11",
         "--socket=wayland",
         "--device=dri",
@@ -40,7 +39,8 @@
                 {
                     "type": "git",
                     "url": "https://github.com/j0ck4/wren-project.git",
-                    "tag": "v0.2.1"
+                    "tag": "v0.2.1",
+                    "commit": "c56a56033a847d3421e659e7a15eee0067e2a1aa"
                 },
                 "cargo-sources.json"
             ]
