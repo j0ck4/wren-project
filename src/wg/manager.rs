@@ -4,11 +4,14 @@
 //! on the host via `flatpak-spawn --host`. Privileged commands go
 //! through `pkexec`, which presents a polkit prompt.
 
+// `args` (the command words) and `argv` (the full flatpak-spawn argv)
+// are deliberately distinct here.
+#![allow(clippy::similar_names)]
+
 use std::{collections::HashSet, ffi::OsStr, path::Path};
 
 use anyhow::{Context, Result, bail};
 use gtk::gio;
-use gtk::prelude::*;
 
 pub async fn up(config_path: &Path) -> Result<()> {
     let path = config_path.to_string_lossy();

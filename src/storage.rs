@@ -178,7 +178,9 @@ mod tests {
 
     #[allow(unsafe_code)]
     fn isolated<F: FnOnce()>(test: F) {
-        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let _guard = ENV_LOCK
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let temp = tempfile::TempDir::new().unwrap();
         // SAFETY: env::set_var is process-wide; the ENV_LOCK
         // mutex above serialises all storage tests so no other

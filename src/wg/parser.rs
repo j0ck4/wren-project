@@ -138,6 +138,8 @@ fn apply_interface(i: &mut Interface, key: &str, value: String) -> Result<(), Pa
             );
         }
         // Recognised but ignored keys (advanced features handled by wg-quick itself).
+        // Listed explicitly as documentation even though the body matches `_`.
+        #[allow(clippy::match_same_arms)]
         "table" | "preup" | "postup" | "predown" | "postdown" | "saveconfig" | "fwmark" => {}
         _ => {} // Ignore unknown keys to be forgiving.
     }

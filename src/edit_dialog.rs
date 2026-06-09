@@ -21,27 +21,27 @@ mod imp {
     #[template(resource = "/io/github/j0ck4/Wren/edit_dialog.ui")]
     pub struct WrenEditDialog {
         #[template_child]
-        pub cancel_button:    TemplateChild<gtk::Button>,
+        pub cancel_button: TemplateChild<gtk::Button>,
         #[template_child]
-        pub save_button:      TemplateChild<gtk::Button>,
+        pub save_button: TemplateChild<gtk::Button>,
         #[template_child]
-        pub private_key_row:  TemplateChild<adw::EntryRow>,
+        pub private_key_row: TemplateChild<adw::EntryRow>,
         #[template_child]
-        pub address_row:      TemplateChild<adw::EntryRow>,
+        pub address_row: TemplateChild<adw::EntryRow>,
         #[template_child]
-        pub dns_row:          TemplateChild<adw::EntryRow>,
+        pub dns_row: TemplateChild<adw::EntryRow>,
         #[template_child]
-        pub listen_port_row:  TemplateChild<adw::EntryRow>,
+        pub listen_port_row: TemplateChild<adw::EntryRow>,
         #[template_child]
-        pub mtu_row:          TemplateChild<adw::EntryRow>,
+        pub mtu_row: TemplateChild<adw::EntryRow>,
         #[template_child]
-        pub peers_group:      TemplateChild<adw::PreferencesGroup>,
+        pub peers_group: TemplateChild<adw::PreferencesGroup>,
         #[template_child]
-        pub add_peer_button:  TemplateChild<gtk::Button>,
+        pub add_peer_button: TemplateChild<gtk::Button>,
 
         pub config_path: RefCell<Option<PathBuf>>,
-        pub peer_rows:   RefCell<Vec<PeerRow>>,
-        pub on_saved:    RefCell<Option<Box<dyn Fn()>>>,
+        pub peer_rows: RefCell<Vec<PeerRow>>,
+        pub on_saved: RefCell<Option<Box<dyn Fn()>>>,
     }
 
     #[glib::object_subclass]
@@ -72,12 +72,12 @@ glib::wrapper! {
 
 #[derive(Debug, Clone)]
 pub struct PeerRow {
-    pub container:     adw::ExpanderRow,
-    pub public_key:    adw::EntryRow,
+    pub container: adw::ExpanderRow,
+    pub public_key: adw::EntryRow,
     pub preshared_key: adw::EntryRow,
-    pub allowed_ips:   adw::EntryRow,
-    pub endpoint:      adw::EntryRow,
-    pub keepalive:     adw::EntryRow,
+    pub allowed_ips: adw::EntryRow,
+    pub endpoint: adw::EntryRow,
+    pub keepalive: adw::EntryRow,
 }
 
 impl WrenEditDialog {
@@ -99,7 +99,8 @@ impl WrenEditDialog {
     fn populate(&self, config: &ParsedConfig) {
         let imp = self.imp();
         imp.private_key_row.set_text(&config.interface.private_key);
-        imp.address_row.set_text(&config.interface.address.join(", "));
+        imp.address_row
+            .set_text(&config.interface.address.join(", "));
         imp.dns_row.set_text(&config.interface.dns.join(", "));
         imp.listen_port_row.set_text(
             &config
@@ -223,7 +224,7 @@ impl WrenEditDialog {
         ));
 
         let row = PeerRow {
-            container:     container.clone(),
+            container: container.clone(),
             public_key,
             preshared_key,
             allowed_ips,
@@ -265,10 +266,10 @@ impl WrenEditDialog {
 
         let interface = Interface {
             private_key,
-            address:     split_csv(&imp.address_row.text()),
-            dns:         split_csv(&imp.dns_row.text()),
+            address: split_csv(&imp.address_row.text()),
+            dns: split_csv(&imp.dns_row.text()),
             listen_port: parse_optional(&imp.listen_port_row.text(), "ListenPort")?,
-            mtu:         parse_optional(&imp.mtu_row.text(), "MTU")?,
+            mtu: parse_optional(&imp.mtu_row.text(), "MTU")?,
         };
 
         let mut peers = Vec::new();
@@ -280,12 +281,9 @@ impl WrenEditDialog {
             peers.push(Peer {
                 public_key,
                 preshared_key: nonempty(&row.preshared_key.text()),
-                allowed_ips:   split_csv(&row.allowed_ips.text()),
-                endpoint:      nonempty(&row.endpoint.text()),
-                persistent_keepalive: parse_optional(
-                    &row.keepalive.text(),
-                    "PersistentKeepalive",
-                )?,
+                allowed_ips: split_csv(&row.allowed_ips.text()),
+                endpoint: nonempty(&row.endpoint.text()),
+                persistent_keepalive: parse_optional(&row.keepalive.text(), "PersistentKeepalive")?,
             });
         }
 

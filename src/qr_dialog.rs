@@ -83,6 +83,9 @@ pub fn show(parent: &impl IsA<gtk::Widget>, name: &str, conf: &str) {
     dialog.present(Some(parent));
 }
 
+// pixel_width is a small QR raster dimension (a few hundred px at most),
+// so the usize -> i32 casts for the pixbuf API can never truncate or wrap.
+#[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
 fn render_qr(text: &str) -> Result<gdk::Texture> {
     let code = QrCode::new(text.as_bytes())?;
     let modules = code.to_colors();

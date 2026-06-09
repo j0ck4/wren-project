@@ -213,6 +213,8 @@ fn short_key(key: &str) -> String {
 }
 
 /// Human-readable byte count using IEC prefixes (KiB / MiB / GiB).
+// Precision loss is irrelevant for a human-readable transfer counter.
+#[allow(clippy::cast_precision_loss)]
 fn format_bytes(b: u64) -> String {
     const KIB: u64 = 1024;
     const MIB: u64 = KIB * 1024;

@@ -24,7 +24,7 @@ use crate::{
 fn friendly_error(e: &anyhow::Error) -> String {
     e.chain()
         .last()
-        .map_or_else(|| e.to_string(), |c| c.to_string())
+        .map_or_else(|| e.to_string(), ToString::to_string)
 }
 
 mod imp {
@@ -256,23 +256,26 @@ impl WrenWindow {
 
     fn show_editor_for_selected(&self) {
         let imp = self.imp();
-        let Some(name) = imp.selected_name.borrow().clone() else { return };
-        let Some(path) = imp.selected_path.borrow().clone() else { return };
+        let Some(name) = imp.selected_name.borrow().clone() else {
+            return;
+        };
+        let Some(path) = imp.selected_path.borrow().clone() else {
+            return;
+        };
 
         // Re-read the current tunnel from disk so the editor
         // reflects whatever's authoritative right now.
-        let tunnel = match self.store_lookup(&name) {
-            Some(t) => t,
-            None => {
-                self.toast("Tunnel disappeared from the list");
-                return;
-            }
+        let Some(tunnel) = self.store_lookup(&name) else {
+            self.toast("Tunnel disappeared from the list");
+            return;
         };
 
         let dialog = WrenEditDialog::new(&path, &tunnel.config);
         let win_weak = self.downgrade();
         dialog.set_on_saved(move || {
-            let Some(win) = win_weak.upgrade() else { return };
+            let Some(win) = win_weak.upgrade() else {
+                return;
+            };
             win.toast("Tunnel updated");
             win.refresh_tunnels();
             // Re-show the just-edited tunnel so detail picks up changes.
@@ -320,7 +323,10 @@ impl WrenWindow {
                 if is_active {
                     if let Err(e) = manager::down(&path).await {
                         tracing::error!("delete: disconnect {name} failed: {e:#}");
-                        win.toast(&format!("Could not disconnect {name}: {}", friendly_error(&e)));
+                        win.toast(&format!(
+                            "Could not disconnect {name}: {}",
+                            friendly_error(&e)
+                        ));
                         return;
                     }
                 }

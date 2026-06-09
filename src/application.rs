@@ -118,7 +118,7 @@ impl WrenApplication {
                                 "Could not change autostart: {}",
                                 e.chain()
                                     .last()
-                                    .map_or_else(|| e.to_string(), |c| c.to_string())
+                                    .map_or_else(|| e.to_string(), ToString::to_string)
                             ));
                         }
                     }

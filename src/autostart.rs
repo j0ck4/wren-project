@@ -37,9 +37,7 @@ pub fn disable() -> Result<()> {
 }
 
 fn autostart_file() -> PathBuf {
-    let home = env::var_os("HOME")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from("/"));
+    let home = env::var_os("HOME").map_or_else(|| PathBuf::from("/"), PathBuf::from);
     home.join(".config")
         .join("autostart")
         .join(format!("{}.desktop", config::APP_ID))
