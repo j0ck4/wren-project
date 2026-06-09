@@ -1,7 +1,7 @@
 project(
   'wren',
   'rust',
-  version: '0.1.0',
+  version: '0.2.0',
   meson_version: '>= 1.0.0',
   license: 'GPL-3.0-or-later',
 )

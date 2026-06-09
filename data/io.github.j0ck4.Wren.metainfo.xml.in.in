@@ -39,6 +39,17 @@
   </branding>
 
   <releases>
+    <release version="0.2.0" date="2026-06-09">
+      <description>
+        <p>First feature-complete release.</p>
+        <ul>
+          <li>Import, edit, and delete tunnels</li>
+          <li>One-click connect / disconnect with live transfer stats</li>
+          <li>Share a tunnel to mobile via QR code</li>
+          <li>System tray indicator and start-at-login</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.0" date="2026-05-08">
       <description>
         <p>Initial scaffolding.</p>

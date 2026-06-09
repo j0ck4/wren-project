@@ -18,10 +18,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Pre-release tags (v*-dev*, v*-rc*) build the .Devel app-id;
+      # clean tags (v0.2.0) build the stable io.github.j0ck4.Wren.
       - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
           bundle: wren-${{ github.ref_name }}.flatpak
-          manifest-path: build-aux/flatpak/io.github.j0ck4.Wren.Devel.json
+          manifest-path: build-aux/flatpak/io.github.j0ck4.Wren${{ contains(github.ref_name, '-') && '.Devel' || '' }}.json
           cache-key: flatpak-builder-${{ github.sha }}
           upload-artifact: true
 
@@ -31,3 +33,4 @@ jobs:
           files: wren-${{ github.ref_name }}.flatpak
           generate_release_notes: true
           fail_on_unmatched_files: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
