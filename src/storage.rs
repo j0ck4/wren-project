@@ -212,7 +212,7 @@ AllowedIPs = 0.0.0.0/0
     #[test]
     fn replaces_spaces_and_parens() {
         assert_eq!(
-            sanitize_name("work laptop.vpn (1)").unwrap(),
+            sanitize_name("work laptop.vpn (2)").unwrap(),
             "work-laptop.vpn"
         );
     }
