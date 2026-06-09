@@ -1,12 +1,58 @@
-# Wren
+<p align="center">
+  <img src="data/icons/hicolor/scalable/apps/io.github.j0ck4.Wren.svg" width="120" alt="Wren">
+</p>
 
-Нативный GTK4 / libadwaita клиент WireGuard для Ubuntu.
+<h1 align="center">Wren</h1>
 
-🇬🇧 English version — [README.md](./README.md).
+<p align="center">
+  Нативный клиент WireGuard для рабочего стола GNOME — импортируй,
+  подключай и управляй туннелями из чистого окна GTK4, без терминала.
+</p>
 
-[![CI](https://github.com/j0ck4/wren-project/actions/workflows/ci.yml/badge.svg)](https://github.com/j0ck4/wren-project/actions/workflows/ci.yml)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Rust](https://img.shields.io/badge/rust-stable-orange.svg)](https://www.rust-lang.org/)
+<p align="center">
+  🇬🇧 English version — <a href="./README.md">README.md</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/j0ck4/wren-project/actions/workflows/ci.yml"><img src="https://github.com/j0ck4/wren-project/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3"></a>
+  <a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/rust-stable-orange.svg" alt="Rust"></a>
+</p>
+
+<p align="center">
+  <img src="data/screenshots/wren.png" width="900" alt="Главное окно Wren">
+</p>
+
+## О приложении
+
+Wren управляет VPN-туннелями WireGuard в Linux через нативный интерфейс
+на GTK4 / libadwaita. Это надстройка над стандартными инструментами
+`wg-quick`: импортируешь обычный файл `.conf`, который выдаёт твой
+VPN-провайдер или админ, а затем поднимаешь/опускаешь туннель, смотришь
+статус и правишь его — без терминала.
+
+## Возможности
+
+- **Подключение / отключение одной кнопкой** через `wg-quick` с
+  авторизацией polkit (пароль кэшируется на несколько минут, а не
+  спрашивается каждый раз).
+- **Импорт любого стандартного `.conf`** через диалог выбора файла — без
+  ручного редактирования.
+- **Статистика трафика в реальном времени** (принято / отправлено) с
+  обновлением раз в две секунды, пока туннель поднят.
+- **Полный просмотр деталей** — адрес, DNS, порт, MTU и каждый peer со
+  своими allowed IPs, endpoint и keepalive.
+- **Встроенный редактор** — правка полей интерфейса, добавление и
+  удаление пиров прямо из UI.
+- **Безопасное удаление туннелей** — диалог подтверждения сначала
+  отключает активный туннель.
+- **Поделиться на телефон через QR-код** — сканируется прямо в
+  приложение WireGuard на Android или iOS.
+- **Системный трей** (StatusNotifierItem) с переключателем по каждому
+  туннелю и уведомлениями при подключении / отключении.
+- **Автозапуск при входе** одним переключателем.
+- **Нативность везде** — GTK4 / libadwaita, Wayland и X11, по гайдлайнам
+  GNOME (HIG).
 
 ## Состояние
 
@@ -15,13 +61,13 @@
 ## Документация
 
 Для **обычных пользователей** (скачал → установил → пользуется):
-- 📖 [USAGE.md](./USAGE.md) — End-user guide (English)
-- 📖 [USAGE.ru.md](./USAGE.ru.md) — Руководство пользователя (рус.)
+- [USAGE.md](./USAGE.md) — End-user guide (English)
+- [USAGE.ru.md](./USAGE.ru.md) — Руководство пользователя (рус.)
 
-Для **разработчиков и продвинутых юзеров** (native install,
-сборка из исходников, polkit, file layout):
-- 🛠 [DEVELOPING.md](./DEVELOPING.md) — Developer guide (English)
-- 🛠 [DEVELOPING.ru.md](./DEVELOPING.ru.md) — Гайд для разработчиков (рус.)
+Для **разработчиков и продвинутых юзеров** (native install, сборка из
+исходников, polkit, file layout):
+- [DEVELOPING.md](./DEVELOPING.md) — Developer guide (English)
+- [DEVELOPING.ru.md](./DEVELOPING.ru.md) — Гайд для разработчиков (рус.)
 
 Ниже — быстрая инструкция для сборки.
 
@@ -45,8 +91,15 @@ flatpak run io.github.j0ck4.Wren.Devel
 ```
 
 Bundle самодостаточен и работает на любом дистрибутиве с Flatpak (Ubuntu,
-Fedora, Arch, openSUSE…). Зависимости (GNOME 50 runtime, ~600 МБ) подтянутся
-автоматически с Flathub при первой установке.
+Fedora, Arch, openSUSE…). Зависимости (GNOME 50 runtime, ~600 МБ)
+подтянутся автоматически с Flathub при первой установке.
+
+Дополнительно нужны **WireGuard tools** на хосте — Wren вызывает
+`wg-quick`:
+
+```bash
+sudo apt install wireguard-tools     # Debian / Ubuntu
+```
 
 ## Сборка из исходников
 
@@ -68,24 +121,17 @@ flatpak run io.github.j0ck4.Wren.Devel
 ### Локальная сборка (нужны системные dev-пакеты)
 
 ```bash
-sudo apt install meson ninja-build pkg-config libgtk-4-dev libadwaita-1-dev cargo
+sudo apt install meson ninja-build pkg-config \
+    libgtk-4-dev libadwaita-1-dev libglib2.0-dev libdbus-1-dev cargo
 meson setup builddir --buildtype=release
 meson compile -C builddir
 sudo meson install -C builddir
 ```
 
-### Сборка `.deb`
-
-```bash
-sudo apt install debhelper meson ninja-build pkg-config \
-    libgtk-4-dev libadwaita-1-dev libglib2.0-dev libssl-dev cargo rustc
-dpkg-buildpackage -us -uc -b
-sudo apt install ../wren_0.1.0-1_amd64.deb
-```
-
-После установки `.deb` polkit-policy кладётся в `/usr/share/polkit-1/actions/`,
-и пароль admin запрашивается один раз в 5 минут (`auth_admin_keep`), а не на
-каждое подключение.
+> Нужен Rust 1.85+ (edition 2024). Если `cargo` в дистрибутиве старее —
+> поставь [rustup](https://rustup.rs) или используй сборку через Flatpak
+> выше. Подробности и инструкции по **удалению** обоих вариантов — в
+> [DEVELOPING.md](./DEVELOPING.md).
 
 ## Лицензия
 
