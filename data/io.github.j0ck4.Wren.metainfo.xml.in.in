@@ -33,12 +33,24 @@
 
   <content_rating type="oars-1.1"/>
 
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/j0ck4/wren-project/v0.2.1/data/screenshots/wren.png</image>
+      <caption>Viewing a tunnel's details in Wren</caption>
+    </screenshot>
+  </screenshots>
+
   <branding>
     <color type="primary" scheme_preference="light">#a5c8ff</color>
     <color type="primary" scheme_preference="dark">#1a5fb4</color>
   </branding>
 
   <releases>
+    <release version="0.2.1" date="2026-06-09">
+      <description>
+        <p>Packaging release: reproducible offline (Flathub) builds and a screenshot in the app metadata. No functional changes since 0.2.0.</p>
+      </description>
+    </release>
     <release version="0.2.0" date="2026-06-09">
       <description>
         <p>First feature-complete release.</p>
