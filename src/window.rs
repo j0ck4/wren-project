@@ -56,6 +56,8 @@ mod imp {
         #[template_child]
         pub edit_button: TemplateChild<gtk::Button>,
         #[template_child]
+        pub delete_button: TemplateChild<gtk::Button>,
+        #[template_child]
         pub toast_overlay: TemplateChild<adw::ToastOverlay>,
 
         pub tunnels: OnceCell<gio::ListStore>,
@@ -136,6 +138,12 @@ mod imp {
                 #[weak]
                 win,
                 move |_| win.show_editor_for_selected()
+            ));
+
+            self.delete_button.connect_clicked(glib::clone!(
+                #[weak]
+                win,
+                move |_| win.confirm_and_delete_selected()
             ));
 
             win.refresh_tunnels();
@@ -222,6 +230,7 @@ impl WrenWindow {
         imp.split_view.set_show_content(true);
         imp.share_button.set_visible(true);
         imp.edit_button.set_visible(true);
+        imp.delete_button.set_visible(true);
 
         *imp.selected_name.borrow_mut() = Some(tunnel.name.clone());
         *imp.selected_path.borrow_mut() = Some(tunnel.config_path.clone());
@@ -239,6 +248,7 @@ impl WrenWindow {
         imp.connect_button.set_visible(false);
         imp.share_button.set_visible(false);
         imp.edit_button.set_visible(false);
+        imp.delete_button.set_visible(false);
         imp.tunnel_detail.set_active_state("", false);
         imp.selected_name.borrow_mut().take();
         imp.selected_path.borrow_mut().take();
@@ -271,6 +281,65 @@ impl WrenWindow {
             }
         });
         dialog.present(Some(self));
+    }
+
+    fn confirm_and_delete_selected(&self) {
+        let imp = self.imp();
+        let Some(name) = imp.selected_name.borrow().clone() else {
+            return;
+        };
+        let Some(path) = imp.selected_path.borrow().clone() else {
+            return;
+        };
+        let is_active = imp.active_set.borrow().contains(&name);
+
+        glib::spawn_future_local(glib::clone!(
+            #[weak(rename_to = win)]
+            self,
+            async move {
+                let body = if is_active {
+                    format!(
+                        "\"{name}\" is currently connected. It will be \
+                         disconnected and its configuration permanently \
+                         deleted."
+                    )
+                } else {
+                    format!("\"{name}\" will be permanently deleted.")
+                };
+
+                let dialog = adw::AlertDialog::new(Some("Delete tunnel?"), Some(&body));
+                dialog.add_responses(&[("cancel", "Cancel"), ("delete", "Delete")]);
+                dialog.set_default_response(Some("cancel"));
+                dialog.set_close_response("cancel");
+                dialog.set_response_appearance("delete", adw::ResponseAppearance::Destructive);
+
+                if dialog.choose_future(&win).await != "delete" {
+                    return;
+                }
+
+                if is_active {
+                    if let Err(e) = manager::down(&path).await {
+                        tracing::error!("delete: disconnect {name} failed: {e:#}");
+                        win.toast(&format!("Could not disconnect {name}: {}", friendly_error(&e)));
+                        return;
+                    }
+                }
+
+                match storage::delete(&path) {
+                    Ok(()) => {
+                        tracing::info!("Deleted tunnel {name}");
+                        win.show_placeholder();
+                        win.refresh_tunnels();
+                        win.refresh_active_set();
+                        win.toast(&format!("{name} deleted"));
+                    }
+                    Err(e) => {
+                        tracing::error!("Delete ({name}) failed: {e:#}");
+                        win.toast(&format!("Could not delete {name}: {}", friendly_error(&e)));
+                    }
+                }
+            }
+        ));
     }
 
     fn store_lookup(&self, target: &str) -> Option<Tunnel> {

@@ -56,6 +56,11 @@ pub fn import(src: &Path) -> Result<Tunnel> {
     })
 }
 
+/// Removes a tunnel's `.conf` from the tunnels directory.
+pub fn delete(path: &Path) -> Result<()> {
+    fs::remove_file(path).with_context(|| format!("removing {}", path.display()))
+}
+
 /// Lists all tunnels currently stored in the config directory.
 /// Files whose stem isn't a valid WireGuard interface name are
 /// renamed in place before being loaded.
@@ -264,6 +269,22 @@ AllowedIPs = 0.0.0.0/0
             // The renamed file should now exist on disk.
             assert!(dir.join("home-office-lap.conf").exists());
             assert!(!dir.join("home-office-laptop.conf").exists());
+        });
+    }
+
+    #[test]
+    fn delete_removes_conf() {
+        isolated(|| {
+            let src_dir = tempfile::TempDir::new().unwrap();
+            let src = src_dir.path().join("home-vpn.conf");
+            fs::write(&src, SAMPLE_CONF).unwrap();
+
+            let imported = import(&src).unwrap();
+            assert!(imported.config_path.exists());
+
+            delete(&imported.config_path).unwrap();
+            assert!(!imported.config_path.exists());
+            assert!(list().unwrap().is_empty());
         });
     }
 
